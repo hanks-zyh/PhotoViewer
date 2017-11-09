@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.example.hanks.photoviewer.OverDragLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent">
+
+    <com.example.hanks.photoviewer.HPhotoView
+        android:id="@+id/photoView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"/>
+
+</com.example.hanks.photoviewer.OverDragLayout>
