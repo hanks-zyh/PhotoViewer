@@ -180,14 +180,14 @@ public class HPhotoView extends PhotoView {
     public HPhotoView(Context context, AttributeSet attr, int defStyle) {
         super(context, attr, defStyle);
         statusBarHeight = dip2px(getContext(), 25);
-        attacher = new HPhotoViewAttacher(this);
-        try {
-            Field field = PhotoView.class.getDeclaredField("attacher");
-            field.setAccessible(true);
-            field.set(this, attacher);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        attacher = new HPhotoViewAttacher(this);
+//        try {
+//            Field field = PhotoView.class.getDeclaredField("attacher");
+//            field.setAccessible(true);
+//            field.set(this, attacher);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     public void setInitData(PictureData pictureData) {
