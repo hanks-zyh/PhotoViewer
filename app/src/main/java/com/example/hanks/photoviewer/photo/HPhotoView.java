@@ -1,4 +1,4 @@
-package com.example.hanks.photoviewer;
+package com.example.hanks.photoviewer.photo;
 
 import android.animation.Animator;
 import android.animation.AnimatorSet;
@@ -10,7 +10,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Build;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -23,9 +22,8 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.example.hanks.photoviewer.PictureData;
 import com.github.chrisbanes.photoview.PhotoView;
-
-import java.lang.reflect.Field;
 
 /**
  * HPhotoView
@@ -76,10 +74,10 @@ public class HPhotoView extends PhotoView {
         final Matrix thumbnailMatrix = new Matrix();
         thumbnailMatrix.setValues(pictureData.matrixValue);
         final Matrix fullMatrix = new Matrix(thumbnailMatrix);
-//        fullMatrix.setTranslate(0, 0);
+        fullMatrix.setTranslate(0, 0);
         float sc = targetW * 1f / imageW;
+        if (sc < 1) sc = 1;
         fullMatrix.setScale(sc, sc);
-        setImageMatrix(fullMatrix);
         // Temporarily uses `MATRIX` type, because we want to animate the matrix by ourselves.
         //setScaleType(ImageView.ScaleType.MATRIX);
         setImageMatrix(thumbnailMatrix);
@@ -192,9 +190,8 @@ public class HPhotoView extends PhotoView {
 
     public void setInitData(PictureData pictureData) {
         this.pictureData = pictureData;
-        Uri uri = Uri.parse(pictureData.url);
-        imageW = Integer.parseInt(uri.getQueryParameter("w"));
-        imageH = Integer.parseInt(uri.getQueryParameter("h"));
+        imageW = pictureData.imageSize[0];
+        imageH = pictureData.imageSize[1];
         targetW = getScreenWidth(getContext());
         targetH = (int) (targetW * 1f * imageH / imageW);
         if (targetH > getScreenHeight(getContext())) {
@@ -226,9 +223,11 @@ public class HPhotoView extends PhotoView {
                         } else {
                             setImageDrawable(resource);
                         }
+                        imageH = resource.getIntrinsicHeight();
+                        imageW = resource.getIntrinsicWidth();
+                        createAnimator(true, null);
                     }
                 });
-        createAnimator(true, null);
     }
 
     /**

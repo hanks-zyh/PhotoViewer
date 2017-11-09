@@ -11,6 +11,7 @@ import android.os.Parcelable;
 public class PictureData implements Parcelable {
     public int[] location;
     public int[] size;
+    public int[] imageSize;
     public String url;
     public float[] matrixValue;
 
@@ -24,6 +25,7 @@ public class PictureData implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeIntArray(this.location);
         dest.writeIntArray(this.size);
+        dest.writeIntArray(this.imageSize);
         dest.writeString(this.url);
         dest.writeFloatArray(this.matrixValue);
     }
@@ -34,6 +36,7 @@ public class PictureData implements Parcelable {
     protected PictureData(Parcel in) {
         this.location = in.createIntArray();
         this.size = in.createIntArray();
+        this.imageSize = in.createIntArray();
         this.url = in.readString();
         this.matrixValue = in.createFloatArray();
     }

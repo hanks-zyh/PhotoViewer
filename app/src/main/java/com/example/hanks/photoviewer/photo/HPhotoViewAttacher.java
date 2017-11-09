@@ -1,4 +1,4 @@
-package com.example.hanks.photoviewer;
+package com.example.hanks.photoviewer.photo;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -10,6 +10,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
+import com.example.hanks.photoviewer.PictureActivity;
 import com.github.chrisbanes.photoview.PhotoViewAttacher;
 
 /**
