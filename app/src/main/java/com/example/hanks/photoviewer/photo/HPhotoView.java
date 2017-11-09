@@ -1,6 +1,7 @@
 package com.example.hanks.photoviewer.photo;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
@@ -94,6 +95,28 @@ public class HPhotoView extends PhotoView {
         animator.start();
         if (listener != null) {
             animator.addListener(listener);
+        }
+        if (in) {
+            animator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    super.onAnimationEnd(animation);
+                    // loading
+//                    Glide.with(getContext())
+//                            .asDrawable()
+//                            .load(pictureData.originalUrl)
+//                            .into(new SimpleTarget<Drawable>() {
+//                                @Override
+//                                public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+//                                    // hide loading
+//                                    setImageDrawable(resource);
+//                                    if (resource instanceof GifDrawable) {
+//                                        ((GifDrawable) resource).start();
+//                                    }
+//                                }
+//                            });
+                }
+            });
         }
     }
 
@@ -217,11 +240,9 @@ public class HPhotoView extends PhotoView {
                 .into(new SimpleTarget<Drawable>() {
                     @Override
                     public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+                        setImageDrawable(resource);
                         if (resource instanceof GifDrawable) {
-                            setImageDrawable((GifDrawable) resource);
                             ((GifDrawable) resource).start();
-                        } else {
-                            setImageDrawable(resource);
                         }
                         imageH = resource.getIntrinsicHeight();
                         imageW = resource.getIntrinsicWidth();

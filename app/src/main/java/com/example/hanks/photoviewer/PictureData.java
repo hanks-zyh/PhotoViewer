@@ -13,8 +13,8 @@ public class PictureData implements Parcelable {
     public int[] size;
     public int[] imageSize;
     public String url;
+    public String originalUrl;
     public float[] matrixValue;
-
 
     @Override
     public int describeContents() {
@@ -27,6 +27,7 @@ public class PictureData implements Parcelable {
         dest.writeIntArray(this.size);
         dest.writeIntArray(this.imageSize);
         dest.writeString(this.url);
+        dest.writeString(this.originalUrl);
         dest.writeFloatArray(this.matrixValue);
     }
 
@@ -38,6 +39,7 @@ public class PictureData implements Parcelable {
         this.size = in.createIntArray();
         this.imageSize = in.createIntArray();
         this.url = in.readString();
+        this.originalUrl = in.readString();
         this.matrixValue = in.createFloatArray();
     }
 

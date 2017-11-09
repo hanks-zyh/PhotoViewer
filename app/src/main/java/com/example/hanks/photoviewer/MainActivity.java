@@ -40,11 +40,16 @@ public class MainActivity extends AppCompatActivity {
     List<NewItem> data = new ArrayList<>();
     private RecyclerView recyclerView;
     private PictureAdapter adapter;
+    private int SCREEN_WIDTH, IMAGE_HEIGHT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        SCREEN_WIDTH = Utils.getScreenWidth(this) - Utils.dip2px(this, 32);
+        IMAGE_HEIGHT = Utils.dip2px(this, 140);
+
+
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -103,10 +108,12 @@ public class MainActivity extends AppCompatActivity {
                     if (newItem.pictureUrls != null && newItem.pictureUrls.size() > 0) {
                         PictureItem pictureItem = newItem.pictureUrls.get(0);
                         e.url = pictureItem.middlePicUrl;
+                        e.originalUrl = pictureItem.picUrl;
                         e.imageSize = new int[]{pictureItem.width, pictureItem.height};
                     } else {
                         e.url = urls[0];
-                        e.imageSize = new int[]{690,7001};
+                        e.originalUrl = urls[0];
+                        e.imageSize = new int[]{690, 7001};
                     }
                     list.add(e);
                     PictureActivity.start(MainActivity.this, list);
@@ -122,7 +129,18 @@ public class MainActivity extends AppCompatActivity {
             holder.tv_content.setText(newItem.content);
             String url = urls[0];
             if (newItem.pictureUrls != null && newItem.pictureUrls.size() > 0) {
-                url = newItem.pictureUrls.get(0).middlePicUrl;
+                PictureItem pictureItem = newItem.pictureUrls.get(0);
+                url = pictureItem.middlePicUrl;
+                int w = (int) (1f * IMAGE_HEIGHT * pictureItem.width / pictureItem.height);
+                if (w > SCREEN_WIDTH) {
+                    w = SCREEN_WIDTH;
+                }
+                if (w < IMAGE_HEIGHT) {
+                    w = IMAGE_HEIGHT;
+                }
+                holder.iv_picture.getLayoutParams().width = w;
+            } else {
+                holder.iv_picture.getLayoutParams().width = IMAGE_HEIGHT;
             }
             Glide.with(MainActivity.this)
                     .asDrawable()
