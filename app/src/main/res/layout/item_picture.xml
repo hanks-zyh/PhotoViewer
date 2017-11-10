@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -11,55 +12,48 @@
         android:layout_height="24dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="16dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@mipmap/ic_launcher_round"/>
 
     <TextView
         android:id="@+id/tv_name"
         android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_height="24dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="16dp"
+        android:layout_toRightOf="@id/iv_avatar"
+        android:gravity="center_vertical"
         android:text="TextView"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/iv_avatar"
-        app:layout_constraintStart_toEndOf="@+id/iv_avatar"
-        app:layout_constraintTop_toTopOf="@+id/iv_avatar"/>
+        android:textColor="#666666"
+        android:textSize="12sp"/>
 
     <TextView
         android:id="@+id/tv_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
+        android:layout_below="@id/iv_avatar"
+        android:layout_marginBottom="8dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginRight="16dp"
         android:layout_marginTop="8dp"
         android:ellipsize="end"
         android:lineSpacingExtra="4sp"
         android:maxLines="5"
         android:text="TextView"
-        android:textColor="@android:color/background_light"
-        app:layout_constraintTop_toBottomOf="@+id/iv_avatar"/>
+        android:textColor="#414141"
+        tools:layout_editor_absoluteX="16dp"/>
 
-    <ImageView
+    <com.example.hanks.photoviewer.ninegride.NineGridImageView
         android:id="@+id/iv_pictrure"
-        android:layout_width="140dp"
-        android:layout_height="140dp"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_below="@id/tv_content"
         android:layout_marginBottom="16dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginTop="12dp"
-        android:maxHeight="140dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_loading"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_content"/>
+        android:layout_marginRight="16dp"
+        android:src="@drawable/ic_loading"/>
 
     <View
-        android:id="@+id/imageView3"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#33666666"/>
-</android.support.constraint.ConstraintLayout>
+        android:background="#e1e1e1"/>
+</RelativeLayout>

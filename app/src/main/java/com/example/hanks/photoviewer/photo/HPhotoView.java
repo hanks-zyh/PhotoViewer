@@ -1,7 +1,6 @@
 package com.example.hanks.photoviewer.photo;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
@@ -12,6 +11,7 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Property;
@@ -24,19 +24,24 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.hanks.photoviewer.PictureData;
-import com.github.chrisbanes.photoview.PhotoView;
 
 /**
  * HPhotoView
  * Created by hanks on 17-11-8.
  */
 
-public class HPhotoView extends PhotoView {
+public class HPhotoView extends AppCompatImageView {
     private int statusBarHeight;
     private int imageW, imageH;   // 原图大小
     private int targetW, targetH; // 屏幕上 imageView 的大小
     private float lastY;
     private HPhotoViewAttacher attacher;
+    private boolean inAnima;
+    private Rect thumbnailBounds;
+    private Rect fullBounds;
+    private Matrix thumbnailMatrix;
+    private Matrix fullMatrix;
+    private Animator.AnimatorListener enterAnimatorListener;
 
     public int getImageH() {
         return imageH;
@@ -56,68 +61,33 @@ public class HPhotoView extends PhotoView {
 
     private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
 
-        int oldW = pictureData.size[0];
-        int oldH = pictureData.size[1];
-
-        float oldX = pictureData.location[0];
-        float oldY = pictureData.location[1];
-
-        float targetY = (getScreenHeight(getContext()) - targetH) * 0.5f;
-        Rect thumbnailBounds = new Rect(0, 0, oldW, oldH);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            targetH -= statusBarHeight;
-            thumbnailBounds.top -= statusBarHeight;
-            thumbnailBounds.bottom -= statusBarHeight;
-        }
-
-        final Rect fullBounds = new Rect((int) -oldX, (int) (-oldY + targetY), (int) (-oldX + targetW), (int) (-oldY + targetY + targetH));
-
-        final Matrix thumbnailMatrix = new Matrix();
-        thumbnailMatrix.setValues(pictureData.matrixValue);
-        final Matrix fullMatrix = new Matrix(thumbnailMatrix);
-        fullMatrix.setTranslate(0, 0);
-        float sc = targetW * 1f / imageW;
-        if (sc < 1) sc = 1;
-        fullMatrix.setScale(sc, sc);
         // Temporarily uses `MATRIX` type, because we want to animate the matrix by ourselves.
         //setScaleType(ImageView.ScaleType.MATRIX);
-        setImageMatrix(thumbnailMatrix);
-        int startColor = Color.argb(in ? 0 : 255, 0, 0, 0);
-        int endColor = Color.argb(in ? 255 : 0, 0, 0, 0);
-        Animator bgAnimator = ObjectAnimator.ofObject((ViewGroup) getParent(), "BackgroundColor", new ArgbEvaluator(), startColor, endColor);
+        // setImageMatrix(thumbnailMatrix);
+        int startColor = Color.argb(0, 0, 0, 0);
+        int endColor = Color.argb(255, 0, 0, 0);
+        Animator bgAnimator = ObjectAnimator.ofObject((ViewGroup) getParent(), "BackgroundColor",
+                new ArgbEvaluator(), inAnima && in ? startColor : endColor, in ? endColor : startColor);
         Animator boundsAnimator = ObjectAnimator.ofObject(this, BOUNDS,
-                new RectEvaluator(), in ? thumbnailBounds : fullBounds, in ? fullBounds : thumbnailBounds);
+                new RectEvaluator(), inAnima && in ? thumbnailBounds : fullBounds, in ? fullBounds : thumbnailBounds);
         Animator matrixAnimator = ObjectAnimator.ofObject(this, IMAGE_MATRIX,
-                new MatrixEvaluator(), in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
+                new MatrixEvaluator(), inAnima && in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
         AnimatorSet animator = new AnimatorSet();
         animator.playTogether(boundsAnimator, matrixAnimator, bgAnimator);
-        animator.setDuration(300);
+        animator.setDuration(260);
         animator.start();
         if (listener != null) {
             animator.addListener(listener);
         }
         if (in) {
-            animator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    super.onAnimationEnd(animation);
-                    // loading
-//                    Glide.with(getContext())
-//                            .asDrawable()
-//                            .load(pictureData.originalUrl)
-//                            .into(new SimpleTarget<Drawable>() {
-//                                @Override
-//                                public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
-//                                    // hide loading
-//                                    setImageDrawable(resource);
-//                                    if (resource instanceof GifDrawable) {
-//                                        ((GifDrawable) resource).start();
-//                                    }
-//                                }
-//                            });
-                }
-            });
+            if (enterAnimatorListener != null) {
+                animator.addListener(enterAnimatorListener);
+            }
         }
+    }
+
+    public void setEnterAnimationListener(Animator.AnimatorListener listener) {
+        this.enterAnimatorListener = listener;
     }
 
     private final static Property<View, Rect> BOUNDS =
@@ -220,6 +190,14 @@ public class HPhotoView extends PhotoView {
         if (targetH > getScreenHeight(getContext())) {
             targetH = getScreenHeight(getContext());
         }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            targetH -= statusBarHeight;
+        }
+
+    }
+
+    public void setEnableInAnima(boolean inAnima) {
+        this.inAnima = inAnima;
     }
 
 
@@ -231,7 +209,6 @@ public class HPhotoView extends PhotoView {
         setTranslationY(location[1]);
         getLayoutParams().width = pictureData.size[0];
         getLayoutParams().height = pictureData.size[1];
-        setScaleType(ScaleType.CENTER_CROP);
         String url = pictureData.url;
         Glide.with(getContext())
                 .asDrawable()
@@ -246,6 +223,29 @@ public class HPhotoView extends PhotoView {
                         }
                         imageH = resource.getIntrinsicHeight();
                         imageW = resource.getIntrinsicWidth();
+                        int oldW = pictureData.size[0];
+                        int oldH = pictureData.size[1];
+
+                        float oldX = pictureData.location[0];
+                        float oldY = pictureData.location[1];
+
+                        float targetY = (getScreenHeight(getContext()) - targetH) * 0.5f;
+                        thumbnailBounds = new Rect(0, 0, oldW, oldH);
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                            thumbnailBounds.top -= statusBarHeight;
+                            thumbnailBounds.bottom -= statusBarHeight;
+                        }
+
+                        fullBounds = new Rect((int) -oldX, (int) (-oldY + targetY),
+                                (int) (-oldX + targetW), (int) (-oldY + targetY + targetH));
+
+                        thumbnailMatrix = new Matrix();
+                        thumbnailMatrix.setValues(pictureData.matrixValue);
+                        fullMatrix = new Matrix(thumbnailMatrix);
+                        fullMatrix.setTranslate(0, 0);
+                        float sc = targetW * 1f / imageW;
+                        if (sc < 1) sc = 1;
+                        fullMatrix.setScale(sc, sc);
                         createAnimator(true, null);
                     }
                 });

@@ -1,5 +1,6 @@
 package com.example.hanks.photoviewer;
 
+import android.content.Context;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -15,6 +16,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.example.hanks.photoviewer.ninegride.NineGridImageView;
+import com.example.hanks.photoviewer.ninegride.NineGridImageViewAdapter;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -91,34 +94,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public PictureViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             final PictureViewHolder holder = PictureViewHolder.newInstance(parent, viewType);
-            holder.iv_picture.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    NewItem newItem = data.get(holder.getAdapterPosition());
-
-                    Matrix matrix = holder.iv_picture.getImageMatrix();
-                    ArrayList<PictureData> list = new ArrayList<>();
-                    PictureData e = new PictureData();
-
-                    e.location = new int[2];
-                    view.getLocationOnScreen(e.location);
-                    e.matrixValue = new float[9];
-                    matrix.getValues(e.matrixValue);
-                    e.size = new int[]{view.getWidth(), view.getHeight()};
-                    if (newItem.pictureUrls != null && newItem.pictureUrls.size() > 0) {
-                        PictureItem pictureItem = newItem.pictureUrls.get(0);
-                        e.url = pictureItem.middlePicUrl;
-                        e.originalUrl = pictureItem.picUrl;
-                        e.imageSize = new int[]{pictureItem.width, pictureItem.height};
-                    } else {
-                        e.url = urls[0];
-                        e.originalUrl = urls[0];
-                        e.imageSize = new int[]{690, 7001};
-                    }
-                    list.add(e);
-                    PictureActivity.start(MainActivity.this, list);
-                }
-            });
+            holder.iv_picture.setGap(Utils.dip2px(parent.getContext(), 4));
             return holder;
         }
 
@@ -127,32 +103,56 @@ public class MainActivity extends AppCompatActivity {
             NewItem newItem = data.get(position);
             holder.tv_name.setText(newItem.title);
             holder.tv_content.setText(newItem.content);
-            String url = urls[0];
-            if (newItem.pictureUrls != null && newItem.pictureUrls.size() > 0) {
-                PictureItem pictureItem = newItem.pictureUrls.get(0);
-                url = pictureItem.middlePicUrl;
-                int w = (int) (1f * IMAGE_HEIGHT * pictureItem.width / pictureItem.height);
-                if (w > SCREEN_WIDTH) {
-                    w = SCREEN_WIDTH;
+            final List<PictureItem> pictureUrls = newItem.pictureUrls;
+            if (pictureUrls != null && pictureUrls.size() > 0) {
+                if (pictureUrls.size() == 1) {
+                    holder.iv_picture.setSingleImgSize(pictureUrls.get(0).width, pictureUrls.get(0).height);
                 }
-                if (w < IMAGE_HEIGHT) {
-                    w = IMAGE_HEIGHT;
-                }
-                holder.iv_picture.getLayoutParams().width = w;
-            } else {
-                holder.iv_picture.getLayoutParams().width = IMAGE_HEIGHT;
-            }
-            Glide.with(MainActivity.this)
-                    .asDrawable()
-                    .load(url)
-                    .thumbnail(.2f)
-                    .transition(withCrossFade())
-                    .into(new SimpleTarget<Drawable>() {
-                        @Override
-                        public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
-                            holder.iv_picture.setImageDrawable(resource);
+                holder.iv_picture.setVisibility(View.VISIBLE);
+                holder.iv_picture.setAdapter(new NineGridImageViewAdapter() {
+                    @Override
+                    protected void onDisplayImage(Context context, final ImageView imageView, int position) {
+                        String url = pictureUrls.get(position).thumbnailUrl;
+                        Glide.with(context)
+                                .asDrawable()
+                                .load(url)
+                                .thumbnail(.2f)
+                                .transition(withCrossFade())
+                                .into(new SimpleTarget<Drawable>() {
+                                    @Override
+                                    public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+                                        imageView.setImageDrawable(resource);
+                                    }
+                                });
+                    }
+
+                    @Override
+                    protected void onItemImageClick(Context context, ImageView imageView, int position) {
+                        super.onItemImageClick(context, imageView, position);
+                        ArrayList<PictureData> list = new ArrayList<>();
+                        for (int i = 0; i < pictureUrls.size(); i++) {
+                            PictureItem pictureUrl = pictureUrls.get(i);
+                            ImageView view = (ImageView) holder.iv_picture.getChildAt(i);
+                            PictureData e = new PictureData();
+                            e.location = new int[2];
+                            view.getLocationOnScreen(e.location);
+                            e.matrixValue = new float[9];
+                            view.getImageMatrix().getValues(e.matrixValue);
+                            e.size = new int[]{view.getWidth(), view.getHeight()};
+                            e.url = pictureUrl.thumbnailUrl;
+                            e.originalUrl = pictureUrl.picUrl;
+                            e.imageSize = new int[]{pictureUrl.width, pictureUrl.height};
+                            list.add(e);
                         }
-                    });
+                        PictureActivity.start(MainActivity.this, list, position);
+
+                    }
+                });
+                holder.iv_picture.setImagesCount(pictureUrls.size());
+            } else {
+                holder.iv_picture.setVisibility(View.GONE);
+            }
+
         }
 
         @Override
@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
 
     static class PictureViewHolder extends RecyclerView.ViewHolder {
         TextView tv_name, tv_content;
-        ImageView iv_picture;
+        NineGridImageView iv_picture;
 
         static PictureViewHolder newInstance(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_picture, parent, false);
