@@ -16,7 +16,6 @@ import android.util.AttributeSet;
 import android.util.Property;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
@@ -33,26 +32,31 @@ public class TransitionImageView extends AppCompatImageView {
     private int statusBarHeight;
     private int imageW, imageH;   // 原图大小
     private int targetW, targetH; // 屏幕上 imageView 的大小
-    private boolean inAnima;
-    private Rect thumbnailBounds;
-    private Rect fullBounds;
-    private Matrix thumbnailMatrix;
-    private Matrix fullMatrix;
+    private boolean isEnterAnim;
+    private Rect thumbnailBounds, fullBounds;
+    private Matrix thumbnailMatrix, fullMatrix;
+    private int startColor, endColor;
     private Animator.AnimatorListener enterAnimatorListener;
 
-    private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
+    public void setEndColor(int endColor) {
+        this.endColor = endColor;
+    }
 
-        // Temporarily uses `MATRIX` type, because we want to animate the matrix by ourselves.
-        //setScaleType(ImageView.ScaleType.MATRIX);
-        // setImageMatrix(thumbnailMatrix);
-        int startColor = Color.argb(0, 0, 0, 0);
-        int endColor = Color.argb(255, 0, 0, 0);
+    public Rect getFullBounds() {
+        return fullBounds;
+    }
+
+    public void setFullBounds(Rect fullBounds) {
+        this.fullBounds.set(fullBounds);
+    }
+
+    private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
         Animator bgAnimator = ObjectAnimator.ofObject((ViewGroup) getParent(), "BackgroundColor",
-                new ArgbEvaluator(), inAnima && in ? startColor : endColor, in ? endColor : startColor);
+                new ArgbEvaluator(), isEnterAnim && in ? startColor : endColor, in ? endColor : startColor);
         Animator boundsAnimator = ObjectAnimator.ofObject(this, BOUNDS,
-                new RectEvaluator(), inAnima && in ? thumbnailBounds : fullBounds, in ? fullBounds : thumbnailBounds);
-        Animator matrixAnimator = ObjectAnimator.ofObject(this, IMAGE_MATRIX,
-                new MatrixEvaluator(), inAnima && in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
+                new RectEvaluator(), isEnterAnim && in ? thumbnailBounds : fullBounds, in ? fullBounds : thumbnailBounds);
+        Animator matrixAnimator = ObjectAnimator.ofObject(this, "imageMatrix",
+                new MatrixEvaluator(), isEnterAnim && in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
         AnimatorSet animator = new AnimatorSet();
         animator.playTogether(boundsAnimator, matrixAnimator, bgAnimator);
         animator.setDuration(200);
@@ -80,19 +84,6 @@ public class TransitionImageView extends AppCompatImageView {
                 public Rect get(View object) {
                     return new Rect(object.getLeft(), object.getTop(),
                             object.getRight(), object.getBottom());
-                }
-            };
-
-    private final static Property<ImageView, Matrix> IMAGE_MATRIX =
-            new Property<ImageView, Matrix>(Matrix.class, "imageMatrix") {
-                @Override
-                public void set(ImageView object, Matrix value) {
-                    object.setImageMatrix(value);
-                }
-
-                @Override
-                public Matrix get(ImageView object) {
-                    return object.getImageMatrix();
                 }
             };
 
@@ -168,7 +159,7 @@ public class TransitionImageView extends AppCompatImageView {
     }
 
     public void setEnableInAnima(boolean inAnima) {
-        this.inAnima = inAnima;
+        this.isEnterAnim = inAnima;
     }
 
     @Override
@@ -216,6 +207,11 @@ public class TransitionImageView extends AppCompatImageView {
                         float sc = targetW * 1f / imageW;
                         if (sc < 1) sc = 1;
                         fullMatrix.setScale(sc, sc);
+
+
+                        startColor = Color.argb(0, 0, 0, 0);
+                        endColor = Color.argb(255, 0, 0, 0);
+
                         createAnimator(true, null);
                     }
                 });

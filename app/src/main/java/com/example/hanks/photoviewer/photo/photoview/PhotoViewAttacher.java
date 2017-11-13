@@ -21,6 +21,7 @@ import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,8 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.OverScroller;
 
+import com.example.hanks.photoviewer.photo.Utils;
+
 /**
  * The component of {@link PhotoView} which does the work allowing for zooming, scaling, panning, etc.
  * It is made public in case you need to subclass something other than {@link ImageView} and still
@@ -39,6 +42,9 @@ import android.widget.OverScroller;
  */
 public class PhotoViewAttacher implements View.OnTouchListener,
         View.OnLayoutChangeListener {
+    private static final float SCROLL_RATIO = 0.5f;
+    public static float MAX_PULL_RANGE;
+    private boolean isPullCloseMode;
 
     private static float DEFAULT_MAX_SCALE = 3.0f;
     private static float DEFAULT_MID_SCALE = 1.75f;
@@ -83,6 +89,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     private OnScaleChangedListener mScaleChangeListener;
     private OnSingleFlingListener mSingleFlingListener;
     private OnViewDragListener mOnViewDragListener;
+    private OnPullCloseListener onPullCloseListener;
 
     private FlingRunnable mCurrentFlingRunnable;
     private int mScrollEdge = EDGE_BOTH;
@@ -90,6 +97,96 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
     private boolean mZoomEnabled = true;
     private ScaleType mScaleType = ScaleType.FIT_CENTER;
+    private float totalDy;
+
+    private void onPullClose(float dx, float dy) {
+        if (this.isPullCloseMode) {
+            totalDy += dy;
+            if (onPullCloseListener != null) {
+                onPullCloseListener.onPullClose(dx, totalDy);
+            }
+            setImageViewMatrix(getDrawMatrix());
+        } else if (Math.abs(dx) < Math.abs(dy)) {
+            this.isPullCloseMode = true;
+        } else {
+            checkAndDisplayMatrix();
+        }
+    }
+
+    public interface OnPullCloseListener {
+        void onPullClose(float dx, float dy);
+
+        void onClose(float dy);
+    }
+
+    public void setOnPullCloseListener(OnPullCloseListener onPullCloseListener) {
+        this.onPullCloseListener = onPullCloseListener;
+    }
+
+    private class TranslateRunnable implements Runnable {
+        private final long mStartTime = System.currentTimeMillis();
+        private final float startTranslateX;
+        private final float startTranslateY;
+        private final float targetTranslateX;
+        private final float targetTranslateY;
+        private final int bgAlpha;
+
+        public TranslateRunnable(float currentX, float currentY, float targetX, float targeyY) {
+            this.startTranslateX = currentX;
+            this.startTranslateY = currentY;
+            this.targetTranslateX = targetX;
+            this.targetTranslateY = targeyY;
+            bgAlpha = ((PhotoView) mImageView).getBgAlpha();
+        }
+
+        public void run() {
+            ImageView imageView = getImageView();
+            if (imageView != null) {
+                float t = interpolate();
+                float dx = (this.startTranslateX + ((this.targetTranslateX - this.startTranslateX) * t)) - getValue(mDrawMatrix, 2);
+                float dy = (this.startTranslateY + ((this.targetTranslateY - this.startTranslateY) * t)) - getValue(mDrawMatrix, 5);
+                mSuppMatrix.postTranslate(dx, dy);
+                if (onPullCloseListener != null) {
+                    onPullCloseListener.onPullClose(dx, totalDy);
+                }
+                if (mImageView instanceof PhotoView) {
+                    ((PhotoView) mImageView).changeBackgroundColorAlpha((int) (bgAlpha + (255 - bgAlpha) * t));
+                }
+                setImageViewMatrix(getDrawMatrix());
+                if (t < 1.0f) {
+                    Compat.postOnAnimation(imageView, this);
+                }
+            }
+        }
+
+        private float interpolate() {
+            return mInterpolator.getInterpolation(Math.min(1.0f, (((float) (System.currentTimeMillis() - this.mStartTime)) * 1.0f) / 200.0f));
+        }
+    }
+
+    private ImageView getImageView() {
+        return mImageView;
+    }
+
+    public void checkPullClose() {
+        ImageView imageView = mImageView;
+        if (imageView != null) {
+            if (Math.abs(totalDy) > MAX_PULL_RANGE) {
+                checkAndDisplayMatrix();
+                onCloseStart();
+                return;
+            }
+            totalDy = 0;
+            imageView.post(new TranslateRunnable(getValue(getDrawMatrix(), 2), getValue(getDrawMatrix(), 5), getDisplayRect().left, getDisplayRect().top));
+        }
+    }
+
+    public void onCloseStart() {
+        Log.e("xxxxxxxxxx", "onCloseStart: ");
+        if (onPullCloseListener != null) {
+            onPullCloseListener.onClose(totalDy);
+        }
+    }
 
     private OnGestureListener onGestureListener = new OnGestureListener() {
         @Override
@@ -101,8 +198,22 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             if (mOnViewDragListener != null) {
                 mOnViewDragListener.onDrag(dx, dy);
             }
-            mSuppMatrix.postTranslate(dx, dy);
-            checkAndDisplayMatrix();
+            final RectF rect = getDisplayRect(getDrawMatrix());
+            boolean isMinimunScale = getScale() <= getMinimumScale();
+            boolean canScrollDown = dy > 0 && rect != null && rect.top < 0;
+            boolean canScrollUp = dy < 0 && rect != null && rect.bottom > getImageViewHeight(mImageView);
+            if (isMinimunScale && !canScrollDown && !canScrollUp) {
+                float transY = dy;
+                if (Math.abs(totalDy) > MAX_PULL_RANGE) {
+                    transY = 0;
+                }
+                transY *= SCROLL_RATIO;
+                mSuppMatrix.postTranslate(0, transY);
+                onPullClose(0, transY);
+            } else {
+                mSuppMatrix.postTranslate(dx, dy);
+                checkAndDisplayMatrix();
+            }
 
         /*
          * Here we decide whether to let the ImageView's parent to start taking
@@ -157,6 +268,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         if (imageView.isInEditMode()) {
             return;
         }
+        MAX_PULL_RANGE = (float) Utils.dip2px(imageView.getContext(), 90.0f);
 
         mBaseRotation = 0.0f;
 
@@ -377,6 +489,11 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                                     rect.centerX(), rect.centerY()));
                             handled = true;
                         }
+                    }
+                    if (this.isPullCloseMode) {
+                        isPullCloseMode = false;
+                        checkPullClose();
+                        break;
                     }
                     break;
             }

@@ -14,6 +14,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -84,11 +85,8 @@ public class PictureActivity extends AppCompatActivity {
 
     boolean finishAnimation = false;
 
-    private static final int SWIPE_MIN_DISTANCE = 60;
-    private static final int SWIPE_THRESHOLD_VELOCITY = 100;
-
     class PicturePageAdapter extends PagerAdapter {
-        HashMap<Integer, View> map = new HashMap<>();
+        SparseArray<View> map = new SparseArray<>();
 
         @Override
         public int getCount() {
@@ -110,6 +108,7 @@ public class PictureActivity extends AppCompatActivity {
                 final TransitionImageView photo = view.findViewById(R.id.photoView);
                 final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
                 final ProgressView loading = view.findViewById(R.id.loading);
+                bigPhoto.setTransitionImageView(photo);
                 bigPhoto.setVisibility(View.GONE);
                 photo.setInitData(pictureData);
                 photo.setEnableInAnima(inAnima);
@@ -131,6 +130,7 @@ public class PictureActivity extends AppCompatActivity {
                                         // hide loading
                                         loading.endAnimation();
                                         bigPhoto.setVisibility(View.VISIBLE);
+                                        photo.setVisibility(View.INVISIBLE);
                                         bigPhoto.setImageDrawable(resource);
                                         if (resource instanceof GifDrawable) {
                                             ((GifDrawable) resource).start();
@@ -166,6 +166,7 @@ public class PictureActivity extends AppCompatActivity {
         bigPhoto.setVisibility(View.INVISIBLE);
         final View loading = view.findViewById(R.id.loading);
         loading.setVisibility(View.GONE);
+        photoView.setVisibility(View.VISIBLE);
         photoView.runFinishAnimation(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {

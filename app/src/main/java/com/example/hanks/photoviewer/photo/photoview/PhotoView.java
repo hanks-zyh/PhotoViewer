@@ -16,14 +16,21 @@
 package com.example.hanks.photoviewer.photo.photoview;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
+import android.view.View;
 import android.widget.ImageView;
+
+import com.example.hanks.photoviewer.PictureActivity;
+import com.example.hanks.photoviewer.photo.TransitionImageView;
+import com.example.hanks.photoviewer.photo.Utils;
 
 
 /**
@@ -34,6 +41,9 @@ public class PhotoView extends AppCompatImageView {
 
     private PhotoViewAttacher attacher;
     private ScaleType pendingScaleType;
+    private float PULL_ALPHA_DISTANCE;
+    private TransitionImageView transitionImageView;
+    private int bgAlpha; // 0..255
 
     public PhotoView(Context context) {
         this(context, null);
@@ -48,6 +58,14 @@ public class PhotoView extends AppCompatImageView {
         init();
     }
 
+    public void setTransitionImageView(TransitionImageView imageView) {
+        transitionImageView = imageView;
+    }
+
+    public int getBgAlpha() {
+        return bgAlpha;
+    }
+
     private void init() {
         attacher = new PhotoViewAttacher(this);
         //We always pose as a Matrix scale type, though we can change to another scale type
@@ -57,6 +75,40 @@ public class PhotoView extends AppCompatImageView {
         if (pendingScaleType != null) {
             setScaleType(pendingScaleType);
             pendingScaleType = null;
+        }
+        PULL_ALPHA_DISTANCE = Utils.dip2px(getContext(), 150);
+        attacher.setOnPullCloseListener(new PhotoViewAttacher.OnPullCloseListener() {
+            @Override
+            public void onPullClose(float dx, float dy) {
+                bgAlpha = (int) (255 * (1 - Math.abs(dy) / PULL_ALPHA_DISTANCE));
+                changeBackgroundColorAlpha(bgAlpha);
+            }
+
+            @Override
+            public void onClose(float dy) {
+
+                if (transitionImageView != null) {
+                    transitionImageView.setEndColor(Color.argb(bgAlpha, 0, 0, 0));
+
+                    Rect fullBounds = transitionImageView.getFullBounds();
+                    fullBounds.top += dy;
+                    fullBounds.bottom += dy;
+                    transitionImageView.setFullBounds(fullBounds);
+                }
+                if (getContext() instanceof PictureActivity) {
+                    ((PictureActivity) getContext()).onBackPressed();
+                }
+            }
+        });
+    }
+
+    public void changeBackgroundColorAlpha(int alpha) {
+        if (alpha < 0) alpha = 0;
+        if (alpha > 255) alpha = 255;
+        int color = Color.argb(alpha, 0, 0, 0);
+        setBackgroundColor(color);
+        if (getParent() != null && getParent() instanceof View) {
+            ((View) getParent()).setBackgroundColor(color);
         }
     }
 
