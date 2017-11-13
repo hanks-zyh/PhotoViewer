@@ -84,9 +84,6 @@ public class PictureActivity extends AppCompatActivity {
 
     boolean finishAnimation = false;
 
-    private static final int SWIPE_MIN_DISTANCE = 60;
-    private static final int SWIPE_THRESHOLD_VELOCITY = 100;
-
     class PicturePageAdapter extends PagerAdapter {
         HashMap<Integer, View> map = new HashMap<>();
 
@@ -110,6 +107,7 @@ public class PictureActivity extends AppCompatActivity {
                 final TransitionImageView photo = view.findViewById(R.id.photoView);
                 final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
                 final ProgressView loading = view.findViewById(R.id.loading);
+                bigPhoto.setTransitionImageView(photo);
                 bigPhoto.setVisibility(View.GONE);
                 photo.setInitData(pictureData);
                 photo.setEnableInAnima(inAnima);
@@ -135,6 +133,7 @@ public class PictureActivity extends AppCompatActivity {
                                         if (resource instanceof GifDrawable) {
                                             ((GifDrawable) resource).start();
                                         }
+                                        photo.setVisibility(View.GONE);
                                     }
                                 });
                     }

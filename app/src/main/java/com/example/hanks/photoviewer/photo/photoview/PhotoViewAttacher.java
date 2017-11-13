@@ -21,6 +21,7 @@ import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.support.v4.view.MotionEventCompat;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -32,6 +33,8 @@ import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.OverScroller;
 
+import com.example.hanks.photoviewer.photo.Utils;
+
 /**
  * The component of {@link PhotoView} which does the work allowing for zooming, scaling, panning, etc.
  * It is made public in case you need to subclass something other than {@link ImageView} and still
@@ -39,6 +42,9 @@ import android.widget.OverScroller;
  */
 public class PhotoViewAttacher implements View.OnTouchListener,
         View.OnLayoutChangeListener {
+
+    public static float MAX_PULL_RANGE;
+    private boolean isPullCloseMode;
 
     private static float DEFAULT_MAX_SCALE = 3.0f;
     private static float DEFAULT_MID_SCALE = 1.75f;
@@ -90,19 +96,116 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
     private boolean mZoomEnabled = true;
     private ScaleType mScaleType = ScaleType.FIT_CENTER;
+    private float totalDy;
+
+    private void onPullClose(float dx, float dy) {
+        if (this.isPullCloseMode) {
+            totalDy += dy;
+            if (onPullCloseListener != null) {
+                onPullCloseListener.onPullClose(dx, totalDy);
+            }
+            setImageViewMatrix(getDrawMatrix());
+        } else if (Math.abs(dx) < Math.abs(dy)) {
+            this.isPullCloseMode = true;
+        } else {
+            checkAndDisplayMatrix();
+        }
+    }
+
+    public interface OnPullCloseListener {
+        void onPullClose(float dx, float dy);
+
+        void onClose(float dy);
+    }
+
+    OnPullCloseListener onPullCloseListener;
+
+    public void setOnPullCloseListener(OnPullCloseListener onPullCloseListener) {
+        this.onPullCloseListener = onPullCloseListener;
+    }
+
+    private class TranslateRunnable implements Runnable {
+        private final long mStartTime = System.currentTimeMillis();
+        private final float startTranslateX;
+        private final float startTranslateY;
+        private final float targetTranslateX;
+        private final float targetTranslateY;
+
+        public TranslateRunnable(float currentX, float currentY, float targetX, float targeyY) {
+            this.startTranslateX = currentX;
+            this.startTranslateY = currentY;
+            this.targetTranslateX = targetX;
+            this.targetTranslateY = targeyY;
+        }
+
+        public void run() {
+            ImageView imageView = getImageView();
+            if (imageView != null) {
+                float t = interpolate();
+                float dx = (this.startTranslateX + ((this.targetTranslateX - this.startTranslateX) * t)) - getValue(mDrawMatrix, 2);
+                float dy = (this.startTranslateY + ((this.targetTranslateY - this.startTranslateY) * t)) - getValue(mDrawMatrix, 5);
+                mSuppMatrix.postTranslate(dx, dy);
+                if (onPullCloseListener != null) {
+                    onPullCloseListener.onPullClose(dx, totalDy);
+                }
+                setImageViewMatrix(getDrawMatrix());
+                if (t < 1.0f) {
+                    Compat.postOnAnimation(imageView, this);
+                }
+            }
+        }
+
+        private float interpolate() {
+            return mInterpolator.getInterpolation(Math.min(1.0f, (((float) (System.currentTimeMillis() - this.mStartTime)) * 1.0f) / 200.0f));
+        }
+    }
+
+    private ImageView getImageView() {
+        return mImageView;
+    }
+
+    public void checkPullClose() {
+        ImageView imageView = mImageView;
+        if (imageView != null) {
+            if (Math.abs(totalDy) > MAX_PULL_RANGE) {
+                checkAndDisplayMatrix();
+                onCloseStart();
+                return;
+            }
+            totalDy = 0;
+            imageView.post(new TranslateRunnable(getValue(getDrawMatrix(), 2), getValue(getDrawMatrix(), 5), getDisplayRect().left, getDisplayRect().top));
+        }
+    }
+
+    public void onCloseStart() {
+        Log.e("xxxxxxxxxx", "onCloseStart: ");
+        if (onPullCloseListener != null) {
+            onPullCloseListener.onClose(totalDy);
+        }
+    }
 
     private OnGestureListener onGestureListener = new OnGestureListener() {
         @Override
         public void onDrag(float dx, float dy) {
-            if (mScaleDragDetector.isScaling()) {
+            boolean isScaling = mScaleDragDetector.isScaling();
+            if (isScaling) {
                 return; // Do not drag if we are already scaling
             }
 
             if (mOnViewDragListener != null) {
                 mOnViewDragListener.onDrag(dx, dy);
             }
-            mSuppMatrix.postTranslate(dx, dy);
-            checkAndDisplayMatrix();
+            final RectF rect = getDisplayRect(getDrawMatrix());
+            boolean isMinimunScale = getScale() <= getMinimumScale();
+            boolean canScrollDown = dy > 0 && rect != null && rect.top < 0;
+            boolean canScrollUp = dy < 0 && rect != null && rect.bottom > getImageViewHeight(mImageView);
+            if (isMinimunScale && !canScrollDown && !canScrollUp) {
+                mSuppMatrix.postTranslate(0, dy);
+                onPullClose(0, dy);
+            } else {
+                mSuppMatrix.postTranslate(dx, dy);
+                checkAndDisplayMatrix();
+            }
 
         /*
          * Here we decide whether to let the ImageView's parent to start taking
@@ -114,7 +217,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
          * the edge, aka 'overscrolling', let the parent take over).
          */
             ViewParent parent = mImageView.getParent();
-            if (mAllowParentInterceptOnEdge && !mScaleDragDetector.isScaling() && !mBlockParentIntercept) {
+            if (mAllowParentInterceptOnEdge && !isScaling && !mBlockParentIntercept) {
                 if (mScrollEdge == EDGE_BOTH
                         || (mScrollEdge == EDGE_LEFT && dx >= 1f)
                         || (mScrollEdge == EDGE_RIGHT && dx <= -1f)) {
@@ -157,6 +260,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         if (imageView.isInEditMode()) {
             return;
         }
+        MAX_PULL_RANGE = (float) Utils.dip2px(imageView.getContext(), 100.0f);
 
         mBaseRotation = 0.0f;
 
@@ -353,9 +457,9 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                     if (parent != null) {
                         parent.requestDisallowInterceptTouchEvent(true);
                     }
-
                     // If we're flinging, and the user presses down, cancel
                     // fling
+                    isPullCloseMode = true;
                     cancelFling();
                     break;
 
@@ -377,6 +481,10 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                                     rect.centerX(), rect.centerY()));
                             handled = true;
                         }
+                    }
+                    if (this.isPullCloseMode) {
+                        checkPullClose();
+                        break;
                     }
                     break;
             }

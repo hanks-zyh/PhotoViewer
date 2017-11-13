@@ -39,14 +39,22 @@ public class TransitionImageView extends AppCompatImageView {
     private Matrix thumbnailMatrix;
     private Matrix fullMatrix;
     private Animator.AnimatorListener enterAnimatorListener;
+    private int startColor;
+    private int endColor;
+
+    public void setEndColor(int endColor) {
+        this.endColor = endColor;
+    }
+
+    public Rect getFullBounds() {
+        return fullBounds;
+    }
+
+    public void setFullBounds(Rect fullBounds) {
+        this.fullBounds.set(fullBounds);
+    }
 
     private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
-
-        // Temporarily uses `MATRIX` type, because we want to animate the matrix by ourselves.
-        //setScaleType(ImageView.ScaleType.MATRIX);
-        // setImageMatrix(thumbnailMatrix);
-        int startColor = Color.argb(0, 0, 0, 0);
-        int endColor = Color.argb(255, 0, 0, 0);
         Animator bgAnimator = ObjectAnimator.ofObject((ViewGroup) getParent(), "BackgroundColor",
                 new ArgbEvaluator(), inAnima && in ? startColor : endColor, in ? endColor : startColor);
         Animator boundsAnimator = ObjectAnimator.ofObject(this, BOUNDS,
@@ -55,7 +63,7 @@ public class TransitionImageView extends AppCompatImageView {
                 new MatrixEvaluator(), inAnima && in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
         AnimatorSet animator = new AnimatorSet();
         animator.playTogether(boundsAnimator, matrixAnimator, bgAnimator);
-        animator.setDuration(200);
+        animator.setDuration(260);
         animator.start();
         if (listener != null) {
             animator.addListener(listener);
@@ -63,6 +71,7 @@ public class TransitionImageView extends AppCompatImageView {
         if (in && enterAnimatorListener != null) {
             animator.addListener(enterAnimatorListener);
         }
+        setVisibility(VISIBLE);
     }
 
     public void setEnterAnimationListener(Animator.AnimatorListener listener) {
@@ -216,6 +225,10 @@ public class TransitionImageView extends AppCompatImageView {
                         float sc = targetW * 1f / imageW;
                         if (sc < 1) sc = 1;
                         fullMatrix.setScale(sc, sc);
+
+                        startColor = Color.argb(0, 0, 0, 0);
+                        endColor = Color.argb(255, 0, 0, 0);
+
                         createAnimator(true, null);
                     }
                 });
