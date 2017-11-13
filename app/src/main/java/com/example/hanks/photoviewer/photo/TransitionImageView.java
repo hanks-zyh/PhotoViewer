@@ -55,7 +55,7 @@ public class TransitionImageView extends AppCompatImageView {
                 new MatrixEvaluator(), inAnima && in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
         AnimatorSet animator = new AnimatorSet();
         animator.playTogether(boundsAnimator, matrixAnimator, bgAnimator);
-        animator.setDuration(3000);
+        animator.setDuration(200);
         animator.start();
         if (listener != null) {
             animator.addListener(listener);

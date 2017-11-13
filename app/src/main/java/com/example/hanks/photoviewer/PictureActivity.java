@@ -163,9 +163,9 @@ public class PictureActivity extends AppCompatActivity {
         View view = adapter.map.get(viewPager.getCurrentItem());
         TransitionImageView photoView = view.findViewById(R.id.photoView);
         final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
-        final View loading = view.findViewById(R.id.loading);
-        loading.setVisibility(View.INVISIBLE);
         bigPhoto.setVisibility(View.INVISIBLE);
+        final View loading = view.findViewById(R.id.loading);
+        loading.setVisibility(View.GONE);
         photoView.runFinishAnimation(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
