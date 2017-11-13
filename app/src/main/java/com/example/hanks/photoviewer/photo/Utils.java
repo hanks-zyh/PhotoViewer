@@ -1,4 +1,4 @@
-package com.example.hanks.photoviewer;
+package com.example.hanks.photoviewer.photo;
 
 import android.content.Context;
 import android.util.DisplayMetrics;

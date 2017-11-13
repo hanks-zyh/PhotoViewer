@@ -13,7 +13,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Property;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,34 +29,16 @@ import com.example.hanks.photoviewer.PictureData;
  * Created by hanks on 17-11-8.
  */
 
-public class HPhotoView extends AppCompatImageView {
+public class TransitionImageView extends AppCompatImageView {
     private int statusBarHeight;
     private int imageW, imageH;   // 原图大小
     private int targetW, targetH; // 屏幕上 imageView 的大小
-    private float lastY;
-    private HPhotoViewAttacher attacher;
     private boolean inAnima;
     private Rect thumbnailBounds;
     private Rect fullBounds;
     private Matrix thumbnailMatrix;
     private Matrix fullMatrix;
     private Animator.AnimatorListener enterAnimatorListener;
-
-    public int getImageH() {
-        return imageH;
-    }
-
-    public int getImageW() {
-        return imageW;
-    }
-
-    public int getTargetH() {
-        return targetH;
-    }
-
-    public int getTargetW() {
-        return targetW;
-    }
 
     private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
 
@@ -74,15 +55,13 @@ public class HPhotoView extends AppCompatImageView {
                 new MatrixEvaluator(), inAnima && in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
         AnimatorSet animator = new AnimatorSet();
         animator.playTogether(boundsAnimator, matrixAnimator, bgAnimator);
-        animator.setDuration(260);
+        animator.setDuration(3000);
         animator.start();
         if (listener != null) {
             animator.addListener(listener);
         }
-        if (in) {
-            if (enterAnimatorListener != null) {
-                animator.addListener(enterAnimatorListener);
-            }
+        if (in && enterAnimatorListener != null) {
+            animator.addListener(enterAnimatorListener);
         }
     }
 
@@ -117,7 +96,7 @@ public class HPhotoView extends AppCompatImageView {
                 }
             };
 
-    public void runFinishAnimation(Animator.AnimatorListener listener) {
+    public void runFinishAnimation(final Animator.AnimatorListener listener) {
         createAnimator(false, listener);
     }
 
@@ -160,35 +139,27 @@ public class HPhotoView extends AppCompatImageView {
 
     private PictureData pictureData;
 
-    public HPhotoView(Context context) {
+    public TransitionImageView(Context context) {
         this(context, null);
     }
 
-    public HPhotoView(Context context, AttributeSet attr) {
+    public TransitionImageView(Context context, AttributeSet attr) {
         this(context, attr, 0);
     }
 
-    public HPhotoView(Context context, AttributeSet attr, int defStyle) {
+    public TransitionImageView(Context context, AttributeSet attr, int defStyle) {
         super(context, attr, defStyle);
-        statusBarHeight = dip2px(getContext(), 25);
-//        attacher = new HPhotoViewAttacher(this);
-//        try {
-//            Field field = PhotoView.class.getDeclaredField("attacher");
-//            field.setAccessible(true);
-//            field.set(this, attacher);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        statusBarHeight = Utils.dip2px(getContext(), 25);
     }
 
     public void setInitData(PictureData pictureData) {
         this.pictureData = pictureData;
         imageW = pictureData.imageSize[0];
         imageH = pictureData.imageSize[1];
-        targetW = getScreenWidth(getContext());
+        targetW = Utils.getScreenWidth(getContext());
         targetH = (int) (targetW * 1f * imageH / imageW);
-        if (targetH > getScreenHeight(getContext())) {
-            targetH = getScreenHeight(getContext());
+        if (targetH > Utils.getScreenHeight(getContext())) {
+            targetH = Utils.getScreenHeight(getContext());
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             targetH -= statusBarHeight;
@@ -199,7 +170,6 @@ public class HPhotoView extends AppCompatImageView {
     public void setEnableInAnima(boolean inAnima) {
         this.inAnima = inAnima;
     }
-
 
     @Override
     protected void onAttachedToWindow() {
@@ -229,7 +199,7 @@ public class HPhotoView extends AppCompatImageView {
                         float oldX = pictureData.location[0];
                         float oldY = pictureData.location[1];
 
-                        float targetY = (getScreenHeight(getContext()) - targetH) * 0.5f;
+                        float targetY = (Utils.getScreenHeight(getContext()) - targetH) * 0.5f;
                         thumbnailBounds = new Rect(0, 0, oldW, oldH);
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                             thumbnailBounds.top -= statusBarHeight;
@@ -249,30 +219,6 @@ public class HPhotoView extends AppCompatImageView {
                         createAnimator(true, null);
                     }
                 });
-    }
-
-    /**
-     * 根据手机的分辨率从 dp 的单位 转成为 px(像素)
-     */
-    public static int dip2px(Context context, float dpValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (dpValue * scale + 0.5f);
-    }
-
-    /**
-     * 获取屏幕的宽度
-     */
-    public static int getScreenWidth(Context context) {
-        DisplayMetrics dm = context.getResources().getDisplayMetrics();
-        return dm.widthPixels;
-    }
-
-    /**
-     * 获取屏幕的高度
-     */
-    public static int getScreenHeight(Context context) {
-        DisplayMetrics dm = context.getResources().getDisplayMetrics();
-        return dm.heightPixels;
     }
 
 }

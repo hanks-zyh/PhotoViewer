@@ -22,13 +22,12 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.example.hanks.photoviewer.photo.HPhotoView;
-import com.github.chrisbanes.photoview.PhotoView;
+import com.example.hanks.photoviewer.photo.ProgressView;
+import com.example.hanks.photoviewer.photo.TransitionImageView;
+import com.example.hanks.photoviewer.photo.photoview.PhotoView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import static android.widget.ImageView.ScaleType.FIT_CENTER;
 
 public class PictureActivity extends AppCompatActivity {
 
@@ -83,6 +82,8 @@ public class PictureActivity extends AppCompatActivity {
         viewPager.setCurrentItem(index, false);
     }
 
+    boolean finishAnimation = false;
+
     private static final int SWIPE_MIN_DISTANCE = 60;
     private static final int SWIPE_THRESHOLD_VELOCITY = 100;
 
@@ -106,8 +107,9 @@ public class PictureActivity extends AppCompatActivity {
             final PictureData pictureData = data.get(position);
             if (view == null) {
                 view = LayoutInflater.from(container.getContext()).inflate(R.layout.layout_picture_page, container, false);
-                final HPhotoView photo = view.findViewById(R.id.photoView);
+                final TransitionImageView photo = view.findViewById(R.id.photoView);
                 final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
+                final ProgressView loading = view.findViewById(R.id.loading);
                 bigPhoto.setVisibility(View.GONE);
                 photo.setInitData(pictureData);
                 photo.setEnableInAnima(inAnima);
@@ -115,15 +117,20 @@ public class PictureActivity extends AppCompatActivity {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         super.onAnimationEnd(animation);
-                        Glide.with(photo.getContext())
+                        finishAnimation = true;
+                        loading.setVisibility(View.VISIBLE);
+                        loading.startAnimation();
+                        inAnima = false;
+                        Glide.with(bigPhoto.getContext())
                                 .asDrawable()
+                                .thumbnail(.2f)
                                 .load(pictureData.originalUrl)
                                 .into(new SimpleTarget<Drawable>() {
                                     @Override
                                     public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
                                         // hide loading
+                                        loading.endAnimation();
                                         bigPhoto.setVisibility(View.VISIBLE);
-                                        bigPhoto.getAttacher().setScaleType(FIT_CENTER);
                                         bigPhoto.setImageDrawable(resource);
                                         if (resource instanceof GifDrawable) {
                                             ((GifDrawable) resource).start();
@@ -132,7 +139,6 @@ public class PictureActivity extends AppCompatActivity {
                                 });
                     }
                 });
-                inAnima = false;
                 map.put(position, view);
             }
             container.addView(view);
@@ -151,32 +157,22 @@ public class PictureActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        if (!finishAnimation) {
+            return;
+        }
         View view = adapter.map.get(viewPager.getCurrentItem());
-        HPhotoView photoView = view.findViewById(R.id.photoView);
-        PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
+        TransitionImageView photoView = view.findViewById(R.id.photoView);
+        final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
+        final View loading = view.findViewById(R.id.loading);
+        loading.setVisibility(View.INVISIBLE);
         bigPhoto.setVisibility(View.INVISIBLE);
-        photoView.runFinishAnimation(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-
-            }
-
+        photoView.runFinishAnimation(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
                 finish();
                 overridePendingTransition(0, 0);
             }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-
-            }
         });
-
     }
 }

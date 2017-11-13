@@ -3,19 +3,26 @@
              android:layout_width="match_parent"
              android:layout_height="match_parent">
 
-    <com.example.hanks.photoviewer.photo.HPhotoView
+    <com.example.hanks.photoviewer.photo.TransitionImageView
         android:id="@+id/photoView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="matrix"/>
 
-    <com.github.chrisbanes.photoview.PhotoView
+    <com.example.hanks.photoviewer.photo.photoview.PhotoView
         android:id="@+id/bigPhotoView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:background="#000"
-        android:scaleType="fitCenter"
+        android:scaleType="centerCrop"
         android:visibility="gone"/>
+
+    <com.example.hanks.photoviewer.photo.ProgressView
+        android:id="@+id/loading"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:visibility="invisible"/>
 
 </FrameLayout>

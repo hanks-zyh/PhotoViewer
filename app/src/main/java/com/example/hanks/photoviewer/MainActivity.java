@@ -1,7 +1,6 @@
 package com.example.hanks.photoviewer;
 
 import android.content.Context;
-import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +17,7 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.hanks.photoviewer.ninegride.NineGridImageView;
 import com.example.hanks.photoviewer.ninegride.NineGridImageViewAdapter;
+import com.example.hanks.photoviewer.photo.Utils;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -121,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
                                 .into(new SimpleTarget<Drawable>() {
                                     @Override
                                     public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
+
                                         imageView.setImageDrawable(resource);
                                     }
                                 });
