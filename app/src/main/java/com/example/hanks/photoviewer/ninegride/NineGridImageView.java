@@ -1,6 +1,7 @@
 package com.example.hanks.photoviewer.ninegride;
 
 import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -218,7 +219,7 @@ public class NineGridImageView<T> extends ViewGroup {
                 w = h = mGridSize;
                 iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
             }
-
+            iv.setImageDrawable(new ColorDrawable(0x22dde7ec));
             addView(iv, new LayoutParams(w, h));
             mAdapter.onDisplayImage(getContext(), iv, i);
             final int finalI = i;

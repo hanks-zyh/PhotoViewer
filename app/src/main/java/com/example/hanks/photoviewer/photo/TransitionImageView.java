@@ -59,7 +59,7 @@ public class TransitionImageView extends AppCompatImageView {
                 new MatrixEvaluator(), isEnterAnim && in ? thumbnailMatrix : fullMatrix, in ? fullMatrix : thumbnailMatrix);
         AnimatorSet animator = new AnimatorSet();
         animator.playTogether(boundsAnimator, matrixAnimator, bgAnimator);
-        animator.setDuration(200);
+        animator.setDuration(300);
         animator.start();
         if (listener != null) {
             animator.addListener(listener);
@@ -140,7 +140,7 @@ public class TransitionImageView extends AppCompatImageView {
 
     public TransitionImageView(Context context, AttributeSet attr, int defStyle) {
         super(context, attr, defStyle);
-        statusBarHeight = Utils.dip2px(getContext(), 25);
+        statusBarHeight = Utils.getStatusBarHeight(getContext());
     }
 
     public void setInitData(PictureData pictureData) {
@@ -152,10 +152,6 @@ public class TransitionImageView extends AppCompatImageView {
         if (targetH > Utils.getScreenHeight(getContext())) {
             targetH = Utils.getScreenHeight(getContext());
         }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            targetH -= statusBarHeight;
-        }
-
     }
 
     public void setEnableInAnima(boolean inAnima) {
@@ -190,16 +186,18 @@ public class TransitionImageView extends AppCompatImageView {
                         float oldX = pictureData.location[0];
                         float oldY = pictureData.location[1];
 
-                        float targetY = (Utils.getScreenHeight(getContext()) - targetH) * 0.5f;
+                        Context context = getContext();
+                        float targetY = (Utils.getScreenHeight(context) - targetH) * 0.5f;
                         thumbnailBounds = new Rect(0, 0, oldW, oldH);
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-                            thumbnailBounds.top -= statusBarHeight;
-                            thumbnailBounds.bottom -= statusBarHeight;
-                        }
-
                         fullBounds = new Rect((int) -oldX, (int) (-oldY + targetY),
                                 (int) (-oldX + targetW), (int) (-oldY + targetY + targetH));
 
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                            thumbnailBounds.top -= statusBarHeight;
+                            thumbnailBounds.bottom -= statusBarHeight;
+                            fullBounds.top -= statusBarHeight * 0.5;
+                            fullBounds.bottom -= statusBarHeight * 0.5;
+                        }
                         thumbnailMatrix = new Matrix();
                         thumbnailMatrix.setValues(pictureData.matrixValue);
                         fullMatrix = new Matrix(thumbnailMatrix);
@@ -207,7 +205,6 @@ public class TransitionImageView extends AppCompatImageView {
                         float sc = targetW * 1f / imageW;
                         if (sc < 1) sc = 1;
                         fullMatrix.setScale(sc, sc);
-
 
                         startColor = Color.argb(0, 0, 0, 0);
                         endColor = Color.argb(255, 0, 0, 0);

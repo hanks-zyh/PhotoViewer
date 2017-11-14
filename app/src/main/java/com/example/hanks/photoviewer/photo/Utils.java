@@ -33,4 +33,17 @@ public class Utils {
         return dm.heightPixels;
     }
 
+    public static int getStatusBarHeight(Context context) {
+        try {
+            int identifier = context.getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (identifier > 0) {
+                return context.getResources().getDimensionPixelSize(identifier);
+            }
+            return dip2px(context, 25);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return dip2px(context, 25);
+        }
+    }
+
 }

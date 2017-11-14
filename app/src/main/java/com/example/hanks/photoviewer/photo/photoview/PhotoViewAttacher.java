@@ -20,6 +20,7 @@ import android.graphics.Matrix;
 import android.graphics.Matrix.ScaleToFit;
 import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.v4.view.MotionEventCompat;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -202,7 +203,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             boolean isMinimunScale = getScale() <= getMinimumScale();
             boolean canScrollDown = dy > 0 && rect != null && rect.top < 0;
             boolean canScrollUp = dy < 0 && rect != null && rect.bottom > getImageViewHeight(mImageView);
-            if (isMinimunScale && !canScrollDown && !canScrollUp) {
+            if (Build.VERSION.SDK_INT >= 21 && isMinimunScale && !canScrollDown && !canScrollUp) {
                 float transY = dy;
                 if (Math.abs(totalDy) > MAX_PULL_RANGE) {
                     transY = 0;
@@ -246,6 +247,13 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             mCurrentFlingRunnable.fling(getImageViewWidth(mImageView),
                     getImageViewHeight(mImageView), (int) velocityX, (int) velocityY);
             mImageView.post(mCurrentFlingRunnable);
+//            final RectF rect = getDisplayRect(getDrawMatrix());
+//            boolean isMinimunScale = getScale() <= getMinimumScale();
+//            boolean canScrollDown = velocityY > 0 && rect != null && rect.top < 0;
+//            boolean canScrollUp = velocityY < 0 && rect != null && rect.bottom > getImageViewHeight(mImageView);
+//            if (Build.VERSION.SDK_INT >= 21 && isMinimunScale && !canScrollDown && !canScrollUp) {
+//                onCloseStart();
+//            }
         }
 
         @Override

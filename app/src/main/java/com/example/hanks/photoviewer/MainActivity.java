@@ -121,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
                                 .into(new SimpleTarget<Drawable>() {
                                     @Override
                                     public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
-
                                         imageView.setImageDrawable(resource);
                                     }
                                 });
