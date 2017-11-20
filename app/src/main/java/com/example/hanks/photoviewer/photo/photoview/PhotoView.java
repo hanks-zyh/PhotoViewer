@@ -92,6 +92,10 @@ public class PhotoView extends AppCompatImageView {
                     float[] values = new float[9];
                     transitionImageView.getFullMatrix().getValues(values);
                     values[Matrix.MTRANS_Y] += dy;
+                    /*float[] internalValues = new float[9];
+                    transitionImageView.getFullMatrix().getValues(values);
+                    attacher.getSuppMatrix().getValues(internalValues);
+                    values[Matrix.MTRANS_Y] = dy + internalValues[Matrix.MTRANS_Y];*/
                     transitionImageView.setFullMatrix(values);
                 }
                 if (getContext() instanceof Activity) {

@@ -22,7 +22,6 @@ import android.graphics.RectF;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.v4.view.MotionEventCompat;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -99,7 +98,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     private boolean mZoomEnabled = true;
     private ScaleType mScaleType = ScaleType.FIT_CENTER;
     private float totalDy;
-    private boolean isFling;
+    private long startTime;
 
     private void onPullClose(float dx, float dy) {
         if (this.isPullCloseMode) {
@@ -173,7 +172,9 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     public void checkPullClose() {
         ImageView imageView = mImageView;
         if (imageView != null) {
-            if (Math.abs(totalDy) > MAX_PULL_RANGE || (Math.abs(totalDy) > 20 && isFling)) {
+            long speedTime = System.currentTimeMillis() - startTime;
+            float absDy = Math.abs(totalDy);
+            if (absDy > MAX_PULL_RANGE || (absDy > Utils.dip2px(imageView.getContext(), 15) && speedTime < 150)) {
                 checkAndDisplayMatrix();
                 onCloseStart();
                 return;
@@ -184,7 +185,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     }
 
     public void onCloseStart() {
-        Log.e("xxxxxxxxxx", "onCloseStart: ");
         if (onPullCloseListener != null) {
             onPullCloseListener.onClose(totalDy);
         }
@@ -202,8 +202,8 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             }
             final RectF rect = getDisplayRect(getDrawMatrix());
             boolean isMinimunScale = getScale() <= getMinimumScale();
-            boolean canScrollDown = dy > 0 && rect != null && rect.top < 0;
-            boolean canScrollUp = dy < 0 && rect != null && rect.bottom > getImageViewHeight(mImageView);
+            boolean canScrollDown = dy > 0 && rect != null && (int) rect.top < 0;
+            boolean canScrollUp = dy < 0 && rect != null && (int) rect.bottom > getImageViewHeight(mImageView);
             if (Build.VERSION.SDK_INT >= 21 && isMinimunScale && !canScrollDown && !canScrollUp) {
                 float transY = dy;
                 if (Math.abs(totalDy) > MAX_PULL_RANGE * 2) {
@@ -290,7 +290,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2,
                                    float velocityX, float velocityY) {
-                isFling = true;
                 if (mSingleFlingListener != null) {
                     if (getScale() > DEFAULT_MIN_SCALE) {
                         return false;
@@ -472,6 +471,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
                     // If we're flinging, and the user presses down, cancel
                     // fling
                     cancelFling();
+                    startTime = System.currentTimeMillis();
                     break;
 
                 case MotionEvent.ACTION_CANCEL:
@@ -654,6 +654,9 @@ public class PhotoViewAttacher implements View.OnTouchListener,
      */
     public void getSuppMatrix(Matrix matrix) {
         matrix.set(mSuppMatrix);
+    }
+    public Matrix getSuppMatrix() {
+        return  mSuppMatrix;
     }
 
     private Matrix getDrawMatrix() {
@@ -964,10 +967,8 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         @Override
         public void run() {
             if (mScroller.isFinished()) {
-                isFling = false;
                 return; // remaining post that should not be handled
             }
-            isFling = true;
 
             if (mScroller.computeScrollOffset()) {
 
