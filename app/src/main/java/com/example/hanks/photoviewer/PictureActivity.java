@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -25,10 +26,10 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.hanks.photoviewer.photo.ProgressView;
 import com.example.hanks.photoviewer.photo.TransitionImageView;
+import com.example.hanks.photoviewer.photo.Utils;
 import com.example.hanks.photoviewer.photo.photoview.PhotoView;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class PictureActivity extends AppCompatActivity {
 
@@ -104,10 +105,14 @@ public class PictureActivity extends AppCompatActivity {
             View view = map.get(position);
             final PictureData pictureData = data.get(position);
             if (view == null) {
-                view = LayoutInflater.from(container.getContext()).inflate(R.layout.layout_picture_page, container, false);
+                final Context context = container.getContext();
+                view = LayoutInflater.from(context).inflate(R.layout.layout_picture_page, container, false);
                 final TransitionImageView photo = view.findViewById(R.id.photoView);
                 final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
                 final ProgressView loading = view.findViewById(R.id.loading);
+                final int screenHeight = Utils.getScreenHeight(context);
+                final int screenWidth = Utils.getScreenWidth(context);
+                final int statusBarHeight = Utils.getStatusBarHeight(context);
                 bigPhoto.setTransitionImageView(photo);
                 bigPhoto.setVisibility(View.GONE);
                 photo.setInitData(pictureData);
@@ -120,7 +125,8 @@ public class PictureActivity extends AppCompatActivity {
                         loading.setVisibility(View.VISIBLE);
                         loading.startAnimation();
                         inAnima = false;
-                        Glide.with(bigPhoto.getContext())
+                        final Context context = photo.getContext();
+                        Glide.with(context)
                                 .asDrawable()
                                 .thumbnail(.2f)
                                 .load(pictureData.originalUrl)
@@ -135,6 +141,29 @@ public class PictureActivity extends AppCompatActivity {
                                         if (resource instanceof GifDrawable) {
                                             ((GifDrawable) resource).start();
                                         }
+//                                        int imageH = resource.getIntrinsicHeight();
+//                                        int imageW = resource.getIntrinsicWidth();
+//                                        float sc = screenWidth * 1f / imageW;
+//                                        float showDrawableHeight = imageH * sc;
+//                                        if (showDrawableHeight > screenHeight) {
+//                                            showDrawableHeight = screenHeight;
+//                                        }
+//                                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+//                                            showDrawableHeight -= statusBarHeight;
+//                                        }
+//                                        float targetY = (screenHeight - showDrawableHeight) * 0.5f;
+////                                        if (sc < 1) sc = 1;
+//                                        Matrix fullMatrix = new Matrix();
+//                                        fullMatrix.setValues(new float[]{
+//                                                sc, 0, 0,
+//                                                0f, sc, targetY,
+//                                                0, 0, 1f,
+//                                        });
+//                                        photo.setImageMatrix(fullMatrix);
+//                                        photo.setImageDrawable(resource);
+//                                        if (resource instanceof GifDrawable) {
+//                                            ((GifDrawable) resource).start();
+//                                        }
                                     }
                                 });
                     }

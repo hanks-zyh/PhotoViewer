@@ -15,6 +15,7 @@
  *******************************************************************************/
 package com.example.hanks.photoviewer.photo.photoview;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -76,7 +77,7 @@ public class PhotoView extends AppCompatImageView {
             setScaleType(pendingScaleType);
             pendingScaleType = null;
         }
-        PULL_ALPHA_DISTANCE = Utils.dip2px(getContext(), 150);
+        PULL_ALPHA_DISTANCE = Utils.dip2px(getContext(), 300);
         attacher.setOnPullCloseListener(new PhotoViewAttacher.OnPullCloseListener() {
             @Override
             public void onPullClose(float dx, float dy) {
@@ -86,17 +87,15 @@ public class PhotoView extends AppCompatImageView {
 
             @Override
             public void onClose(float dy) {
-
                 if (transitionImageView != null) {
                     transitionImageView.setEndColor(Color.argb(bgAlpha, 0, 0, 0));
-
-                    Rect fullBounds = transitionImageView.getFullBounds();
-                    fullBounds.top += dy;
-                    fullBounds.bottom += dy;
-                    transitionImageView.setFullBounds(fullBounds);
+                    float[] values = new float[9];
+                    transitionImageView.getFullMatrix().getValues(values);
+                    values[Matrix.MTRANS_Y] += dy;
+                    transitionImageView.setFullMatrix(values);
                 }
-                if (getContext() instanceof PictureActivity) {
-                    ((PictureActivity) getContext()).onBackPressed();
+                if (getContext() instanceof Activity) {
+                    ((Activity) getContext()).onBackPressed();
                 }
             }
         });
@@ -106,7 +105,7 @@ public class PhotoView extends AppCompatImageView {
         if (alpha < 0) alpha = 0;
         if (alpha > 255) alpha = 255;
         int color = Color.argb(alpha, 0, 0, 0);
-        setBackgroundColor(color);
+        //setBackgroundColor(color);
         if (getParent() != null && getParent() instanceof View) {
             ((View) getParent()).setBackgroundColor(color);
         }
