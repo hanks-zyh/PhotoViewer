@@ -1,7 +1,6 @@
 package com.example.hanks.photoviewer.photo;
 
 import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
@@ -17,15 +16,12 @@ import android.util.AttributeSet;
 import android.util.Property;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.bumptech.glide.util.Util;
 import com.example.hanks.photoviewer.PictureData;
-import com.example.hanks.photoviewer.photo.photoview.PhotoView;
 
 /**
  * HPhotoView
@@ -33,6 +29,29 @@ import com.example.hanks.photoviewer.photo.photoview.PhotoView;
  */
 
 public class TransitionImageView extends AppCompatImageView {
+    private final static Property<View, Rect> BOUNDS =
+            new Property<View, Rect>(Rect.class, "bounds") {
+                @Override
+                public void set(View object, Rect value) {
+                    //object.layout(value.left, value.top, value.right, value.bottom);
+                    object.setTranslationX(value.left);
+                    object.setTranslationY(value.top);
+                    object.getLayoutParams().width = value.width();
+                    object.getLayoutParams().height = value.height();
+                    object.requestLayout();
+                }
+
+                @Override
+                public Rect get(View object) {
+                    Rect rect = new Rect();
+                    rect.left = (int) object.getTranslationX();
+                    rect.top = (int) object.getTranslationY();
+                    rect.right = rect.left + object.getWidth();
+                    rect.bottom = rect.top + object.getHeight();
+                    return rect;
+                }
+            };
+    boolean beginLoad = false;
     private int statusBarHeight;
     private int imageW, imageH;   // 原图大小
     private int targetW, targetH; // 屏幕上 imageView 的大小
@@ -42,6 +61,20 @@ public class TransitionImageView extends AppCompatImageView {
     private int startColor, endColor;
     private Animator.AnimatorListener enterAnimatorListener;
     private Drawable thumbnailDrawable;
+    private PictureData pictureData;
+
+    public TransitionImageView(Context context) {
+        this(context, null);
+    }
+
+    public TransitionImageView(Context context, AttributeSet attr) {
+        this(context, attr, 0);
+    }
+
+    public TransitionImageView(Context context, AttributeSet attr, int defStyle) {
+        super(context, attr, defStyle);
+        statusBarHeight = Utils.getStatusBarHeight(getContext());
+    }
 
     public void setEndColor(int endColor) {
         this.endColor = endColor;
@@ -58,11 +91,6 @@ public class TransitionImageView extends AppCompatImageView {
 
     private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
 
-//        setImageMatrix(in ? thumbnailMatrix : fullMatrix);
-//        setImageDrawable(thumbnailDrawable);
-//        if (thumbnailDrawable instanceof GifDrawable) {
-//            ((GifDrawable) thumbnailDrawable).start();
-//        }
         Animator bgAnimator = ObjectAnimator.ofObject((ViewGroup) getParent(), "BackgroundColor",
                 new ArgbEvaluator(), isEnterAnim && in ? startColor : endColor, in ? endColor : startColor);
         Animator boundsAnimator = ObjectAnimator.ofObject(this, BOUNDS,
@@ -88,83 +116,8 @@ public class TransitionImageView extends AppCompatImageView {
         this.enterAnimatorListener = listener;
     }
 
-    private final static Property<View, Rect> BOUNDS =
-            new Property<View, Rect>(Rect.class, "bounds") {
-                @Override
-                public void set(View object, Rect value) {
-                    //object.layout(value.left, value.top, value.right, value.bottom);
-                    object.setTranslationX(value.left);
-                    object.setTranslationY(value.top);
-                    object.getLayoutParams().width = value.width();
-                    object.getLayoutParams().height = value.height();
-                    object.requestLayout();
-                }
-
-                @Override
-                public Rect get(View object) {
-                    Rect rect = new Rect();
-                    rect.left = (int) object.getTranslationX();
-                    rect.top = (int) object.getTranslationY();
-                    rect.right = rect.left + object.getWidth();
-                    rect.bottom = rect.top + object.getHeight();
-                    return rect;
-                }
-            };
-
     public void runFinishAnimation(final Animator.AnimatorListener listener) {
         createAnimator(false, listener);
-    }
-
-    private static class RectEvaluator implements TypeEvaluator<Rect> {
-        private Rect mTmpRect = new Rect();
-
-        @Override
-        public Rect evaluate(float fraction, Rect startValue, Rect endValue) {
-            mTmpRect.left =
-                    (int) (startValue.left + (endValue.left - startValue.left) * fraction);
-            mTmpRect.top =
-                    (int) (startValue.top + (endValue.top - startValue.top) * fraction);
-            mTmpRect.right =
-                    (int) (startValue.right + (endValue.right - startValue.right) * fraction);
-            mTmpRect.bottom =
-                    (int) (startValue.bottom + (endValue.bottom - startValue.bottom) * fraction);
-
-            return mTmpRect;
-        }
-    }
-
-    private static class MatrixEvaluator implements TypeEvaluator<Matrix> {
-        private float[] mTmpStartValues = new float[9];
-        private float[] mTmpEndValues = new float[9];
-        private Matrix mTmpMatrix = new Matrix();
-
-        @Override
-        public Matrix evaluate(float fraction, Matrix startValue, Matrix endValue) {
-            startValue.getValues(mTmpStartValues);
-            endValue.getValues(mTmpEndValues);
-            for (int i = 0; i < 9; i++) {
-                float diff = mTmpEndValues[i] - mTmpStartValues[i];
-                mTmpEndValues[i] = mTmpStartValues[i] + (fraction * diff);
-            }
-            mTmpMatrix.setValues(mTmpEndValues);
-
-            return mTmpMatrix;
-        }
-    }
-
-    private PictureData pictureData;
-
-    public TransitionImageView(Context context) {
-        this(context, null);
-    }
-
-    public TransitionImageView(Context context, AttributeSet attr) {
-        this(context, attr, 0);
-    }
-
-    public TransitionImageView(Context context, AttributeSet attr, int defStyle) {
-        super(context, attr, defStyle);
-        statusBarHeight = Utils.getStatusBarHeight(getContext());
     }
 
     public void setInitData(PictureData pictureData) {
@@ -181,8 +134,6 @@ public class TransitionImageView extends AppCompatImageView {
     public void setEnableInAnima(boolean inAnima) {
         this.isEnterAnim = inAnima;
     }
-
-    boolean beginLoad = false;
 
     @Override
     protected void onAttachedToWindow() {
@@ -251,6 +202,43 @@ public class TransitionImageView extends AppCompatImageView {
                         createAnimator(true, null);
                     }
                 });
+    }
+
+    private static class RectEvaluator implements TypeEvaluator<Rect> {
+        private Rect mTmpRect = new Rect();
+
+        @Override
+        public Rect evaluate(float fraction, Rect startValue, Rect endValue) {
+            mTmpRect.left =
+                    (int) (startValue.left + (endValue.left - startValue.left) * fraction);
+            mTmpRect.top =
+                    (int) (startValue.top + (endValue.top - startValue.top) * fraction);
+            mTmpRect.right =
+                    (int) (startValue.right + (endValue.right - startValue.right) * fraction);
+            mTmpRect.bottom =
+                    (int) (startValue.bottom + (endValue.bottom - startValue.bottom) * fraction);
+
+            return mTmpRect;
+        }
+    }
+
+    private static class MatrixEvaluator implements TypeEvaluator<Matrix> {
+        private float[] mTmpStartValues = new float[9];
+        private float[] mTmpEndValues = new float[9];
+        private Matrix mTmpMatrix = new Matrix();
+
+        @Override
+        public Matrix evaluate(float fraction, Matrix startValue, Matrix endValue) {
+            startValue.getValues(mTmpStartValues);
+            endValue.getValues(mTmpEndValues);
+            for (int i = 0; i < 9; i++) {
+                float diff = mTmpEndValues[i] - mTmpStartValues[i];
+                mTmpEndValues[i] = mTmpStartValues[i] + (fraction * diff);
+            }
+            mTmpMatrix.setValues(mTmpEndValues);
+
+            return mTmpMatrix;
+        }
     }
 
 }

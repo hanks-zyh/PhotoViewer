@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
@@ -26,18 +25,18 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.hanks.photoviewer.photo.ProgressView;
 import com.example.hanks.photoviewer.photo.TransitionImageView;
-import com.example.hanks.photoviewer.photo.Utils;
 import com.example.hanks.photoviewer.photo.photoview.PhotoView;
 
 import java.util.ArrayList;
 
 public class PictureActivity extends AppCompatActivity {
 
+    boolean inAnima = true;
+    boolean finishAnimation = false;
     private ViewPager viewPager;
     private ArrayList<PictureData> data;
     private PicturePageAdapter adapter;
     private int index;
-    boolean inAnima = true;
 
     public static boolean isGif(String url) {
         if (url == null || url.length() == 0) return false;
@@ -84,7 +83,27 @@ public class PictureActivity extends AppCompatActivity {
         viewPager.setCurrentItem(index, false);
     }
 
-    boolean finishAnimation = false;
+    @Override
+    public void onBackPressed() {
+        if (!finishAnimation) {
+            return;
+        }
+        View view = adapter.map.get(viewPager.getCurrentItem());
+        TransitionImageView photoView = view.findViewById(R.id.photoView);
+        final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
+        bigPhoto.setVisibility(View.INVISIBLE);
+        final View loading = view.findViewById(R.id.loading);
+        loading.setVisibility(View.GONE);
+        photoView.setVisibility(View.VISIBLE);
+        photoView.runFinishAnimation(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                finish();
+                overridePendingTransition(0, 0);
+            }
+        });
+    }
 
     class PicturePageAdapter extends PagerAdapter {
         SparseArray<View> map = new SparseArray<>();
@@ -110,9 +129,6 @@ public class PictureActivity extends AppCompatActivity {
                 final TransitionImageView photo = view.findViewById(R.id.photoView);
                 final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
                 final ProgressView loading = view.findViewById(R.id.loading);
-                final int screenHeight = Utils.getScreenHeight(context);
-                final int screenWidth = Utils.getScreenWidth(context);
-                final int statusBarHeight = Utils.getStatusBarHeight(context);
                 bigPhoto.setTransitionImageView(photo);
                 bigPhoto.setVisibility(View.GONE);
                 photo.setInitData(pictureData);
@@ -141,29 +157,6 @@ public class PictureActivity extends AppCompatActivity {
                                         if (resource instanceof GifDrawable) {
                                             ((GifDrawable) resource).start();
                                         }
-//                                        int imageH = resource.getIntrinsicHeight();
-//                                        int imageW = resource.getIntrinsicWidth();
-//                                        float sc = screenWidth * 1f / imageW;
-//                                        float showDrawableHeight = imageH * sc;
-//                                        if (showDrawableHeight > screenHeight) {
-//                                            showDrawableHeight = screenHeight;
-//                                        }
-//                                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-//                                            showDrawableHeight -= statusBarHeight;
-//                                        }
-//                                        float targetY = (screenHeight - showDrawableHeight) * 0.5f;
-////                                        if (sc < 1) sc = 1;
-//                                        Matrix fullMatrix = new Matrix();
-//                                        fullMatrix.setValues(new float[]{
-//                                                sc, 0, 0,
-//                                                0f, sc, targetY,
-//                                                0, 0, 1f,
-//                                        });
-//                                        photo.setImageMatrix(fullMatrix);
-//                                        photo.setImageDrawable(resource);
-//                                        if (resource instanceof GifDrawable) {
-//                                            ((GifDrawable) resource).start();
-//                                        }
                                     }
                                 });
                     }
@@ -182,27 +175,5 @@ public class PictureActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (!finishAnimation) {
-            return;
-        }
-        View view = adapter.map.get(viewPager.getCurrentItem());
-        TransitionImageView photoView = view.findViewById(R.id.photoView);
-        final PhotoView bigPhoto = view.findViewById(R.id.bigPhotoView);
-        bigPhoto.setVisibility(View.INVISIBLE);
-        final View loading = view.findViewById(R.id.loading);
-        loading.setVisibility(View.GONE);
-        photoView.setVisibility(View.VISIBLE);
-        photoView.runFinishAnimation(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                finish();
-                overridePendingTransition(0, 0);
-            }
-        });
     }
 }

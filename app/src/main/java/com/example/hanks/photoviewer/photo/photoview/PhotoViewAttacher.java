@@ -43,42 +43,34 @@ import com.example.hanks.photoviewer.photo.Utils;
 public class PhotoViewAttacher implements View.OnTouchListener,
         View.OnLayoutChangeListener {
     private static final float SCROLL_RATIO = 0.5f;
-    public static float MAX_PULL_RANGE;
-    private boolean isPullCloseMode;
-
-    private static float DEFAULT_MAX_SCALE = 3.0f;
-    private static float DEFAULT_MID_SCALE = 1.75f;
-    private static float DEFAULT_MIN_SCALE = 1.0f;
-    private static int DEFAULT_ZOOM_DURATION = 200;
-
     private static final int EDGE_NONE = -1;
     private static final int EDGE_LEFT = 0;
     private static final int EDGE_RIGHT = 1;
     private static final int EDGE_BOTH = 2;
+    public static float MAX_PULL_RANGE;
+    private static float DEFAULT_MAX_SCALE = 3.0f;
+    private static float DEFAULT_MID_SCALE = 1.75f;
+    private static float DEFAULT_MIN_SCALE = 1.0f;
+    private static int DEFAULT_ZOOM_DURATION = 200;
     private static int SINGLE_TOUCH = 1;
-
-    private Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
-    private int mZoomDuration = DEFAULT_ZOOM_DURATION;
-    private float mMinScale = DEFAULT_MIN_SCALE;
-    private float mMidScale = DEFAULT_MID_SCALE;
-    private float mMaxScale = DEFAULT_MAX_SCALE;
-
-    private boolean mAllowParentInterceptOnEdge = true;
-    private boolean mBlockParentIntercept = false;
-
-    private ImageView mImageView;
-
-    // Gesture Detectors
-    private GestureDetector mGestureDetector;
-    private CustomGestureDetector mScaleDragDetector;
-
     // These are set so we don't keep allocating them on the heap
     private final Matrix mBaseMatrix = new Matrix();
     private final Matrix mDrawMatrix = new Matrix();
     private final Matrix mSuppMatrix = new Matrix();
     private final RectF mDisplayRect = new RectF();
     private final float[] mMatrixValues = new float[9];
-
+    private boolean isPullCloseMode;
+    private Interpolator mInterpolator = new AccelerateDecelerateInterpolator();
+    private int mZoomDuration = DEFAULT_ZOOM_DURATION;
+    private float mMinScale = DEFAULT_MIN_SCALE;
+    private float mMidScale = DEFAULT_MID_SCALE;
+    private float mMaxScale = DEFAULT_MAX_SCALE;
+    private boolean mAllowParentInterceptOnEdge = true;
+    private boolean mBlockParentIntercept = false;
+    private ImageView mImageView;
+    // Gesture Detectors
+    private GestureDetector mGestureDetector;
+    private CustomGestureDetector mScaleDragDetector;
     // Listeners
     private OnMatrixChangedListener mMatrixChangeListener;
     private OnPhotoTapListener mPhotoTapListener;
@@ -99,97 +91,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     private ScaleType mScaleType = ScaleType.FIT_CENTER;
     private float totalDy;
     private long startTime;
-
-    private void onPullClose(float dx, float dy) {
-        if (this.isPullCloseMode) {
-            totalDy += dy;
-            if (onPullCloseListener != null) {
-                onPullCloseListener.onPullClose(dx, totalDy);
-            }
-            setImageViewMatrix(getDrawMatrix());
-        } else if (Math.abs(dx) < Math.abs(dy)) {
-            this.isPullCloseMode = true;
-        } else {
-            checkAndDisplayMatrix();
-        }
-    }
-
-    public interface OnPullCloseListener {
-        void onPullClose(float dx, float dy);
-
-        void onClose(float dy);
-    }
-
-    public void setOnPullCloseListener(OnPullCloseListener onPullCloseListener) {
-        this.onPullCloseListener = onPullCloseListener;
-    }
-
-    private class TranslateRunnable implements Runnable {
-        private final long mStartTime = System.currentTimeMillis();
-        private final float startTranslateX;
-        private final float startTranslateY;
-        private final float targetTranslateX;
-        private final float targetTranslateY;
-        private final int bgAlpha;
-
-        public TranslateRunnable(float currentX, float currentY, float targetX, float targeyY) {
-            this.startTranslateX = currentX;
-            this.startTranslateY = currentY;
-            this.targetTranslateX = targetX;
-            this.targetTranslateY = targeyY;
-            bgAlpha = ((PhotoView) mImageView).getBgAlpha();
-        }
-
-        public void run() {
-            ImageView imageView = getImageView();
-            if (imageView != null) {
-                float t = interpolate();
-                float dx = (this.startTranslateX + ((this.targetTranslateX - this.startTranslateX) * t)) - getValue(mDrawMatrix, 2);
-                float dy = (this.startTranslateY + ((this.targetTranslateY - this.startTranslateY) * t)) - getValue(mDrawMatrix, 5);
-                mSuppMatrix.postTranslate(dx, dy);
-                if (onPullCloseListener != null) {
-                    onPullCloseListener.onPullClose(dx, totalDy);
-                }
-                if (mImageView instanceof PhotoView) {
-                    ((PhotoView) mImageView).changeBackgroundColorAlpha((int) (bgAlpha + (255 - bgAlpha) * t));
-                }
-                setImageViewMatrix(getDrawMatrix());
-                if (t < 1.0f) {
-                    Compat.postOnAnimation(imageView, this);
-                }
-            }
-        }
-
-        private float interpolate() {
-            return mInterpolator.getInterpolation(Math.min(1.0f, (((float) (System.currentTimeMillis() - this.mStartTime)) * 1.0f) / 200.0f));
-        }
-    }
-
-    private ImageView getImageView() {
-        return mImageView;
-    }
-
-    public void checkPullClose() {
-        ImageView imageView = mImageView;
-        if (imageView != null) {
-            long speedTime = System.currentTimeMillis() - startTime;
-            float absDy = Math.abs(totalDy);
-            if (absDy > MAX_PULL_RANGE || (absDy > Utils.dip2px(imageView.getContext(), 15) && speedTime < 150)) {
-                checkAndDisplayMatrix();
-                onCloseStart();
-                return;
-            }
-            totalDy = 0;
-            imageView.post(new TranslateRunnable(getValue(getDrawMatrix(), 2), getValue(getDrawMatrix(), 5), getDisplayRect().left, getDisplayRect().top));
-        }
-    }
-
-    public void onCloseStart() {
-        if (onPullCloseListener != null) {
-            onPullCloseListener.onClose(totalDy);
-        }
-    }
-
     private OnGestureListener onGestureListener = new OnGestureListener() {
         @Override
         public void onDrag(float dx, float dy) {
@@ -372,6 +273,49 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         });
     }
 
+    private void onPullClose(float dx, float dy) {
+        if (this.isPullCloseMode) {
+            totalDy += dy;
+            if (onPullCloseListener != null) {
+                onPullCloseListener.onPullClose(dx, totalDy);
+            }
+            setImageViewMatrix(getDrawMatrix());
+        } else if (Math.abs(dx) < Math.abs(dy)) {
+            this.isPullCloseMode = true;
+        } else {
+            checkAndDisplayMatrix();
+        }
+    }
+
+    public void setOnPullCloseListener(OnPullCloseListener onPullCloseListener) {
+        this.onPullCloseListener = onPullCloseListener;
+    }
+
+    private ImageView getImageView() {
+        return mImageView;
+    }
+
+    public void checkPullClose() {
+        ImageView imageView = mImageView;
+        if (imageView != null) {
+            long speedTime = System.currentTimeMillis() - startTime;
+            float absDy = Math.abs(totalDy);
+            if (absDy > MAX_PULL_RANGE || (absDy > Utils.dip2px(imageView.getContext(), 15) && speedTime < 150)) {
+                checkAndDisplayMatrix();
+                onCloseStart();
+                return;
+            }
+            totalDy = 0;
+            imageView.post(new TranslateRunnable(getValue(getDrawMatrix(), 2), getValue(getDrawMatrix(), 5), getDisplayRect().left, getDisplayRect().top));
+        }
+    }
+
+    public void onCloseStart() {
+        if (onPullCloseListener != null) {
+            onPullCloseListener.onClose(totalDy);
+        }
+    }
+
     public void setOnDoubleTapListener(GestureDetector.OnDoubleTapListener newOnDoubleTapListener) {
         this.mGestureDetector.setOnDoubleTapListener(newOnDoubleTapListener);
     }
@@ -430,20 +374,46 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         return mMinScale;
     }
 
+    public void setMinimumScale(float minimumScale) {
+        Util.checkZoomLevels(minimumScale, mMidScale, mMaxScale);
+        mMinScale = minimumScale;
+    }
+
     public float getMediumScale() {
         return mMidScale;
+    }
+
+    public void setMediumScale(float mediumScale) {
+        Util.checkZoomLevels(mMinScale, mediumScale, mMaxScale);
+        mMidScale = mediumScale;
     }
 
     public float getMaximumScale() {
         return mMaxScale;
     }
 
+    public void setMaximumScale(float maximumScale) {
+        Util.checkZoomLevels(mMinScale, mMidScale, maximumScale);
+        mMaxScale = maximumScale;
+    }
+
     public float getScale() {
         return (float) Math.sqrt((float) Math.pow(getValue(mSuppMatrix, Matrix.MSCALE_X), 2) + (float) Math.pow(getValue(mSuppMatrix, Matrix.MSKEW_Y), 2));
     }
 
+    public void setScale(float scale) {
+        setScale(scale, false);
+    }
+
     public ScaleType getScaleType() {
         return mScaleType;
+    }
+
+    public void setScaleType(ScaleType scaleType) {
+        if (Util.isSupportedScaleType(scaleType) && scaleType != mScaleType) {
+            mScaleType = scaleType;
+            update();
+        }
     }
 
     @Override
@@ -528,21 +498,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         mAllowParentInterceptOnEdge = allow;
     }
 
-    public void setMinimumScale(float minimumScale) {
-        Util.checkZoomLevels(minimumScale, mMidScale, mMaxScale);
-        mMinScale = minimumScale;
-    }
-
-    public void setMediumScale(float mediumScale) {
-        Util.checkZoomLevels(mMinScale, mediumScale, mMaxScale);
-        mMidScale = mediumScale;
-    }
-
-    public void setMaximumScale(float maximumScale) {
-        Util.checkZoomLevels(mMinScale, mMidScale, maximumScale);
-        mMaxScale = maximumScale;
-    }
-
     public void setScaleLevels(float minimumScale, float mediumScale, float maximumScale) {
         Util.checkZoomLevels(minimumScale, mediumScale, maximumScale);
         mMinScale = minimumScale;
@@ -578,10 +533,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         mOnViewDragListener = listener;
     }
 
-    public void setScale(float scale) {
-        setScale(scale, false);
-    }
-
     public void setScale(float scale, boolean animate) {
         setScale(scale,
                 (mImageView.getRight()) / 2,
@@ -612,13 +563,6 @@ public class PhotoViewAttacher implements View.OnTouchListener,
      */
     public void setZoomInterpolator(Interpolator interpolator) {
         mInterpolator = interpolator;
-    }
-
-    public void setScaleType(ScaleType scaleType) {
-        if (Util.isSupportedScaleType(scaleType) && scaleType != mScaleType) {
-            mScaleType = scaleType;
-            update();
-        }
     }
 
     public boolean isZoomable() {
@@ -655,8 +599,9 @@ public class PhotoViewAttacher implements View.OnTouchListener,
     public void getSuppMatrix(Matrix matrix) {
         matrix.set(mSuppMatrix);
     }
+
     public Matrix getSuppMatrix() {
-        return  mSuppMatrix;
+        return mSuppMatrix;
     }
 
     private Matrix getDrawMatrix() {
@@ -875,6 +820,53 @@ public class PhotoViewAttacher implements View.OnTouchListener,
         if (mCurrentFlingRunnable != null) {
             mCurrentFlingRunnable.cancelFling();
             mCurrentFlingRunnable = null;
+        }
+    }
+
+    public interface OnPullCloseListener {
+        void onPullClose(float dx, float dy);
+
+        void onClose(float dy);
+    }
+
+    private class TranslateRunnable implements Runnable {
+        private final long mStartTime = System.currentTimeMillis();
+        private final float startTranslateX;
+        private final float startTranslateY;
+        private final float targetTranslateX;
+        private final float targetTranslateY;
+        private final int bgAlpha;
+
+        public TranslateRunnable(float currentX, float currentY, float targetX, float targeyY) {
+            this.startTranslateX = currentX;
+            this.startTranslateY = currentY;
+            this.targetTranslateX = targetX;
+            this.targetTranslateY = targeyY;
+            bgAlpha = ((PhotoView) mImageView).getBgAlpha();
+        }
+
+        public void run() {
+            ImageView imageView = getImageView();
+            if (imageView != null) {
+                float t = interpolate();
+                float dx = (this.startTranslateX + ((this.targetTranslateX - this.startTranslateX) * t)) - getValue(mDrawMatrix, 2);
+                float dy = (this.startTranslateY + ((this.targetTranslateY - this.startTranslateY) * t)) - getValue(mDrawMatrix, 5);
+                mSuppMatrix.postTranslate(dx, dy);
+                if (onPullCloseListener != null) {
+                    onPullCloseListener.onPullClose(dx, totalDy);
+                }
+                if (mImageView instanceof PhotoView) {
+                    ((PhotoView) mImageView).changeBackgroundColorAlpha((int) (bgAlpha + (255 - bgAlpha) * t));
+                }
+                setImageViewMatrix(getDrawMatrix());
+                if (t < 1.0f) {
+                    Compat.postOnAnimation(imageView, this);
+                }
+            }
+        }
+
+        private float interpolate() {
+            return mInterpolator.getInterpolation(Math.min(1.0f, (((float) (System.currentTimeMillis() - this.mStartTime)) * 1.0f) / 200.0f));
         }
     }
 
