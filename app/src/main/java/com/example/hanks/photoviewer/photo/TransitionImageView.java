@@ -90,7 +90,7 @@ public class TransitionImageView extends AppCompatImageView {
     }
 
     private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
-        if (!isEnterAnim) {
+        if (in && !isEnterAnim) {
             ((ViewGroup) getParent()).setBackgroundColor(endColor);
             setTranslationX(fullBounds.left);
             setTranslationY(fullBounds.top);
