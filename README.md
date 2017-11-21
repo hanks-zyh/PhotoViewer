@@ -1,6 +1,6 @@
 # PhotoViewer
 
-imageView transition animation for api 15+
+imageView transition animation for api 16+
 
 ## feature
 - matrix change

@@ -105,7 +105,7 @@ public class PhotoViewAttacher implements View.OnTouchListener,
             boolean isMinimunScale = getScale() <= getMinimumScale();
             boolean canScrollDown = dy > 0 && rect != null && (int) rect.top < 0;
             boolean canScrollUp = dy < 0 && rect != null && (int) rect.bottom > getImageViewHeight(mImageView);
-            if (Build.VERSION.SDK_INT >= 21 && isMinimunScale && !canScrollDown && !canScrollUp) {
+            if (isMinimunScale && !canScrollDown && !canScrollUp) {
                 float transY = dy;
                 if (Math.abs(totalDy) > MAX_PULL_RANGE * 2) {
                     transY = 0;
@@ -253,9 +253,12 @@ public class PhotoViewAttacher implements View.OnTouchListener,
 
                     if (scale < getMediumScale()) {
                         setScale(getMediumScale(), x, y, true);
-                    } else if (scale >= getMediumScale() && scale < getMaximumScale()) {
-                        setScale(getMaximumScale(), x, y, true);
-                    } else {
+                    }
+                    // cancel max scale
+//                    else if (scale >= getMediumScale() && scale < getMaximumScale()) {
+//                        setScale(getMaximumScale(), x, y, true);
+//                    }
+                    else {
                         setScale(getMinimumScale(), x, y, true);
                     }
                 } catch (ArrayIndexOutOfBoundsException e) {

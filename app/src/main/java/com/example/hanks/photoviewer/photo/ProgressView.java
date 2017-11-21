@@ -112,6 +112,6 @@ public class ProgressView extends View {
         float radius = (Math.min(w, h) - RING_WIDTH) * 0.5f;
         canvas.drawCircle(w / 2, h / 2, radius, ringPaint);
         rectF.set(GAP, GAP, w - GAP, h - GAP);
-        canvas.drawArc(rectF, 0, 360f * progress / 100, true, arcPaint);
+        canvas.drawArc(rectF, -90, 360f * progress / 100, true, arcPaint);
     }
 }

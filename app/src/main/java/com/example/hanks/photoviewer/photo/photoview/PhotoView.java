@@ -43,6 +43,7 @@ public class PhotoView extends AppCompatImageView {
     private float PULL_ALPHA_DISTANCE;
     private TransitionImageView transitionImageView;
     private int bgAlpha; // 0..255
+    private Context context;
 
     public PhotoView(Context context) {
         this(context, null);
@@ -54,6 +55,7 @@ public class PhotoView extends AppCompatImageView {
 
     public PhotoView(Context context, AttributeSet attr, int defStyle) {
         super(context, attr, defStyle);
+        this.context = context;
         init();
     }
 
@@ -96,8 +98,8 @@ public class PhotoView extends AppCompatImageView {
                     values[Matrix.MTRANS_Y] = dy + internalValues[Matrix.MTRANS_Y];*/
                     transitionImageView.setFullMatrix(values);
                 }
-                if (getContext() instanceof Activity) {
-                    ((Activity) getContext()).onBackPressed();
+                if (context instanceof Activity) {
+                    ((Activity) context).onBackPressed();
                 }
             }
         });

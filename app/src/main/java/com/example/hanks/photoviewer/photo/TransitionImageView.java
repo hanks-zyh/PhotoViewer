@@ -90,6 +90,22 @@ public class TransitionImageView extends AppCompatImageView {
     }
 
     private void createAnimator(final boolean in, Animator.AnimatorListener listener) {
+        if (!isEnterAnim) {
+            ((ViewGroup) getParent()).setBackgroundColor(endColor);
+            setTranslationX(fullBounds.left);
+            setTranslationY(fullBounds.top);
+            getLayoutParams().width = fullBounds.width();
+            getLayoutParams().height = fullBounds.height();
+            setImageMatrix(new Matrix(fullMatrix));
+            requestLayout();
+            if (listener != null) {
+                listener.onAnimationEnd(null);
+            }
+            if (enterAnimatorListener != null) {
+                enterAnimatorListener.onAnimationEnd(null);
+            }
+            return;
+        }
 
         Animator bgAnimator = ObjectAnimator.ofObject((ViewGroup) getParent(), "BackgroundColor",
                 new ArgbEvaluator(), isEnterAnim && in ? startColor : endColor, in ? endColor : startColor);
@@ -165,8 +181,8 @@ public class TransitionImageView extends AppCompatImageView {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
                             thumbnailBounds.top -= statusBarHeight;
                             thumbnailBounds.bottom -= statusBarHeight;
-                            fullBounds.top -= statusBarHeight * 0.5;
-                            fullBounds.bottom -= statusBarHeight * 0.5;
+                            fullBounds.top -= statusBarHeight;
+                            fullBounds.bottom -= statusBarHeight;
                         }
                         thumbnailMatrix = new Matrix();
                         thumbnailMatrix.setValues(pictureData.matrixValue);
@@ -177,6 +193,9 @@ public class TransitionImageView extends AppCompatImageView {
                             showDrawableHeight = screenHeight;
                         }
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+                            if ((int)showDrawableHeight == screenHeight){
+                                showDrawableHeight -= statusBarHeight;
+                            }
                             showDrawableHeight -= statusBarHeight;
                         }
                         float targetY = (screenHeight - showDrawableHeight) * 0.5f;

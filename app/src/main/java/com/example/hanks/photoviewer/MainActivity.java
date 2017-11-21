@@ -1,12 +1,16 @@
 package com.example.hanks.photoviewer;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -30,28 +34,14 @@ import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOption
 
 public class MainActivity extends AppCompatActivity {
 
-    String[] urls = {
-            "https://p.upyun.com/demo/tmp/ZNZlVnbH.webp?w=690&h=7001&f=webp",
-            "https://p.upyun.com/demo/tmp/GYvd4i7s.webp?w=690&h=1227&f=webp",
-            "https://p.upyun.com/demo/tmp/KlA4ri7C.webp?w=471&h=314&f=webp",
-            "http://wx2.sinaimg.cn/mw690/83c12c90gy1fh2azm4a41g208w08wx6s.gif?w=320&h=320&f=gif",
-            "https://p.upyun.com/demo/tmp/ZHiI8je1.webp?w=690&h=225&f=webp",
-            "https://p.upyun.com/demo/webp/webp/animated-gif-0.webp?w=430&h=270&f=gif",
-            "http://wx1.sinaimg.cn/mw690/795bf814gy1flajoqymy1j20m80zkjuj.jpg?w=690&h=1104&f=jpg",
-            "http://wx4.sinaimg.cn/mw690/005Fj2RDgy1flbgxzph9uj30c846k1hh.jpg?w=440&h=5420&f=jpg",
-    };
     List<NewItem> data = new ArrayList<>();
     private RecyclerView recyclerView;
     private PictureAdapter adapter;
-    private int SCREEN_WIDTH, IMAGE_HEIGHT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        SCREEN_WIDTH = Utils.getScreenWidth(this) - Utils.dip2px(this, 32);
-        IMAGE_HEIGHT = Utils.dip2px(this, 140);
-
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -65,6 +55,24 @@ public class MainActivity extends AppCompatActivity {
         }
         adapter = new PictureAdapter();
         recyclerView.setAdapter(adapter);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.about:
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse("https://github.com/hanks-zyh/PhotoViewer"));
+                startActivity(intent);
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     static class Result {

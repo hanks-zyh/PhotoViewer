@@ -12,18 +12,18 @@
         android:layout_height="24dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="16dp"
-        app:srcCompat="@mipmap/ic_launcher_round"/>
+        app:srcCompat="@drawable/avatar"/>
 
     <TextView
         android:id="@+id/tv_name"
         android:layout_width="200dp"
         android:layout_height="24dp"
-        android:layout_marginLeft="12dp"
+        android:layout_marginLeft="8dp"
         android:layout_marginTop="16dp"
         android:layout_toRightOf="@id/iv_avatar"
         android:gravity="center_vertical"
         android:text="TextView"
-        android:textColor="#666666"
+        android:textColor="#757575"
         android:textSize="12sp"/>
 
     <TextView
@@ -31,7 +31,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/iv_avatar"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="16dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginTop="8dp"
@@ -54,6 +54,6 @@
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#e1e1e1"/>
+        android:layout_height="0.5dp"
+        android:background="#f1f1f1"/>
 </RelativeLayout>
