@@ -3,16 +3,33 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 26
     defaultConfig {
-        applicationId "com.example.hanks.photoviewer"
+        applicationId "com.hanks.photoviewer"
         minSdkVersion 16
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
-    buildTypes {
+    signingConfigs {
         release {
+            v2SigningEnabled true
+            Properties properties = new Properties()
+            properties.load(project.rootProject.file('local.properties').newDataInputStream())
+            storeFile file(properties.getProperty('KEYSTORE_DIR', null))
+            storePassword properties.getProperty('KESTORE_PASSWORD', null)
+            keyAlias properties.getProperty('KEY_ALIAS', null)
+            keyPassword properties.getProperty('KEY_PASSWORD', null)
+        }
+    }
+    buildTypes {
+        debug {
             minifyEnabled false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -32,6 +49,7 @@ dependencies {
     implementation 'com.android.support:recyclerview-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation 'com.github.bumptech.glide:glide:4.2.0'
+    implementation 'com.google.android.gms:play-services-ads:11.6.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.2.0'
     implementation 'com.google.code.gson:gson:2.8.2'
 }

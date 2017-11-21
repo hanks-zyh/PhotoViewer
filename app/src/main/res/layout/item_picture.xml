@@ -6,51 +6,66 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <ImageView
-        android:id="@+id/iv_avatar"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
-        app:srcCompat="@drawable/avatar"/>
-
-    <TextView
-        android:id="@+id/tv_name"
-        android:layout_width="200dp"
-        android:layout_height="24dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="16dp"
-        android:layout_toRightOf="@id/iv_avatar"
-        android:gravity="center_vertical"
-        android:text="TextView"
-        android:textColor="#757575"
-        android:textSize="12sp"/>
-
-    <TextView
-        android:id="@+id/tv_content"
+    <RelativeLayout
+        android:id="@+id/layout_picture"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/iv_avatar"
-        android:layout_marginBottom="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="8dp"
-        android:ellipsize="end"
-        android:lineSpacingExtra="4sp"
-        android:maxLines="5"
-        android:text="TextView"
-        android:textColor="#414141"
-        tools:layout_editor_absoluteX="16dp"/>
+        android:layout_height="wrap_content">
 
-    <com.example.hanks.photoviewer.ninegride.NineGridImageView
-        android:id="@+id/iv_pictrure"
+        <ImageView
+            android:id="@+id/iv_avatar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="16dp"
+            app:srcCompat="@drawable/avatar"/>
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="200dp"
+            android:layout_height="24dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="16dp"
+            android:layout_toRightOf="@id/iv_avatar"
+            android:gravity="center_vertical"
+            android:text="TextView"
+            android:textColor="#757575"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/tv_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/iv_avatar"
+            android:layout_marginBottom="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginTop="8dp"
+            android:ellipsize="end"
+            android:lineSpacingExtra="4sp"
+            android:maxLines="5"
+            android:text="TextView"
+            android:textColor="#414141"
+            tools:layout_editor_absoluteX="16dp"/>
+
+        <com.example.hanks.photoviewer.ninegride.NineGridImageView
+            android:id="@+id/iv_pictrure"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_below="@id/tv_content"
+            android:layout_marginBottom="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:src="@drawable/ic_loading"/>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_ad"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:layout_below="@id/tv_content"
-        android:layout_marginBottom="16dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:src="@drawable/ic_loading"/>
+        android:layout_height="100dp"
+        android:background="#ffffff"
+        android:gravity="center"
+        android:orientation="vertical"/>
 
     <View
         android:layout_width="match_parent"

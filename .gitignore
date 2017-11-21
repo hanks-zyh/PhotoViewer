@@ -9,3 +9,5 @@
 .externalNativeBuild
 .idea/
 app/build/
+/.gitignore
+*.jks

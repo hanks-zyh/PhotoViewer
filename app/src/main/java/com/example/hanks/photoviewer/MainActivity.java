@@ -22,6 +22,10 @@ import com.bumptech.glide.request.transition.Transition;
 import com.example.hanks.photoviewer.ninegride.NineGridImageView;
 import com.example.hanks.photoviewer.ninegride.NineGridImageViewAdapter;
 import com.example.hanks.photoviewer.photo.Utils;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -42,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        MobileAds.initialize(this, getString(R.string.app_id));
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -109,6 +113,19 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final PictureViewHolder holder, int position) {
             NewItem newItem = data.get(position);
+            if ("-1".equals(newItem.title)){
+                holder.layout_ad.removeAllViews();
+                holder.layout_ad.setVisibility(View.VISIBLE);
+                holder.layout_picture.setVisibility(View.GONE);
+                AdView adView = new AdView(holder.itemView.getContext());
+                adView.setAdSize(AdSize.SMART_BANNER);
+                adView.setAdUnitId(newItem.content);
+                adView.loadAd(new AdRequest.Builder().build());
+                holder.layout_ad.addView(adView);
+                return;
+            }
+            holder.layout_ad.setVisibility(View.GONE);
+            holder.layout_picture.setVisibility(View.VISIBLE);
             holder.tv_name.setText(newItem.title);
             holder.tv_content.setText(newItem.content);
             final List<PictureItem> pictureUrls = newItem.pictureUrls;
@@ -172,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
     static class PictureViewHolder extends RecyclerView.ViewHolder {
         TextView tv_name, tv_content;
         NineGridImageView iv_picture;
+        ViewGroup layout_ad,layout_picture;
 
         static PictureViewHolder newInstance(ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_picture, parent, false);
@@ -181,6 +199,8 @@ public class MainActivity extends AppCompatActivity {
         PictureViewHolder(View itemView) {
             super(itemView);
             tv_name = itemView.findViewById(R.id.tv_name);
+            layout_ad = itemView.findViewById(R.id.layout_ad);
+            layout_picture = itemView.findViewById(R.id.layout_picture);
             tv_content = itemView.findViewById(R.id.tv_content);
             iv_picture = itemView.findViewById(R.id.iv_pictrure);
         }
