@@ -1,10 +1,12 @@
 package com.example.hanks.photoviewer;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -28,6 +30,7 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.reward.RewardedVideoAd;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -41,12 +44,17 @@ import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOption
 public class MainActivity extends AppCompatActivity {
 
     private List<NewItem> data = new ArrayList<>();
+    private RewardedVideoAd mRewardedVideoAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         MobileAds.initialize(this, getString(R.string.app_id));
+        mRewardedVideoAd = MobileAds.getRewardedVideoAdInstance(this);
+        mRewardedVideoAd.loadAd("ca-app-pub-8165670162444117/3189476256",
+                new AdRequest.Builder().build());
+
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         try {
@@ -64,6 +72,37 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setMessage("Support the developer if this demo is helpful to you ?")
+                .setNegativeButton("SOURCE", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setData(Uri.parse("https://github.com/hanks-zyh/PhotoViewer"));
+                        startActivity(intent);
+                    }
+                })
+                .setNeutralButton("NO! EXIT!", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MainActivity.this.finish();
+                    }
+                });
+        if (mRewardedVideoAd.isLoaded()) {
+            builder.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    mRewardedVideoAd.show();
+                }
+            });
+        }
+
+        builder.show();
     }
 
     @Override
