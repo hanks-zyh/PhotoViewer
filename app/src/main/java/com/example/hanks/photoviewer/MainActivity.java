@@ -17,7 +17,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.target.ThumbnailImageViewTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.hanks.photoviewer.ninegride.NineGridImageView;
 import com.example.hanks.photoviewer.ninegride.NineGridImageViewAdapter;
@@ -38,18 +40,15 @@ import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOption
 
 public class MainActivity extends AppCompatActivity {
 
-    List<NewItem> data = new ArrayList<>();
-    private RecyclerView recyclerView;
-    private PictureAdapter adapter;
+    private List<NewItem> data = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         MobileAds.initialize(this, getString(R.string.app_id));
-        recyclerView = findViewById(R.id.recyclerView);
+        RecyclerView recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         try {
             InputStream is = getAssets().open("data.json");
             Result result = new Gson().fromJson(new InputStreamReader(is), Result.class);
@@ -57,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        adapter = new PictureAdapter();
+        PictureAdapter adapter = new PictureAdapter();
         recyclerView.setAdapter(adapter);
     }
 
@@ -69,7 +68,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.about:
                 Intent intent = new Intent(Intent.ACTION_VIEW);
                 intent.setData(Uri.parse("https://github.com/hanks-zyh/PhotoViewer"));
@@ -101,6 +100,26 @@ public class MainActivity extends AppCompatActivity {
         int height;
     }
 
+    static class PictureViewHolder extends RecyclerView.ViewHolder {
+        TextView tv_name, tv_content;
+        NineGridImageView iv_picture;
+        ViewGroup layout_ad, layout_picture;
+
+        PictureViewHolder(View itemView) {
+            super(itemView);
+            tv_name = itemView.findViewById(R.id.tv_name);
+            layout_ad = itemView.findViewById(R.id.layout_ad);
+            layout_picture = itemView.findViewById(R.id.layout_picture);
+            tv_content = itemView.findViewById(R.id.tv_content);
+            iv_picture = itemView.findViewById(R.id.iv_pictrure);
+        }
+
+        static PictureViewHolder newInstance(ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_picture, parent, false);
+            return new PictureViewHolder(view);
+        }
+    }
+
     class PictureAdapter extends RecyclerView.Adapter<PictureViewHolder> {
 
         @Override
@@ -113,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final PictureViewHolder holder, int position) {
             NewItem newItem = data.get(position);
-            if ("-1".equals(newItem.title)){
+            if ("-1".equals(newItem.title)) {
                 holder.layout_ad.removeAllViews();
                 holder.layout_ad.setVisibility(View.VISIBLE);
                 holder.layout_picture.setVisibility(View.GONE);
@@ -141,12 +160,18 @@ public class MainActivity extends AppCompatActivity {
                         Glide.with(context)
                                 .asDrawable()
                                 .load(url)
+                                .apply(RequestOptions.placeholderOf(R.drawable.ic_loading))
                                 .thumbnail(.2f)
                                 .transition(withCrossFade())
                                 .into(new SimpleTarget<Drawable>() {
                                     @Override
-                                    public void onResourceReady(Drawable resource, Transition<? super Drawable> transition) {
-                                        imageView.setImageDrawable(resource);
+                                    public void onResourceReady(final Drawable resource, Transition<? super Drawable> transition) {
+                                        transition.transition(resource, new ThumbnailImageViewTarget(imageView) {
+                                            @Override
+                                            protected Drawable getDrawable(Object re) {
+                                                return resource;
+                                            }
+                                        });
                                     }
                                 });
                     }
@@ -183,26 +208,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public int getItemCount() {
             return data.size();
-        }
-    }
-
-    static class PictureViewHolder extends RecyclerView.ViewHolder {
-        TextView tv_name, tv_content;
-        NineGridImageView iv_picture;
-        ViewGroup layout_ad,layout_picture;
-
-        static PictureViewHolder newInstance(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_picture, parent, false);
-            return new PictureViewHolder(view);
-        }
-
-        PictureViewHolder(View itemView) {
-            super(itemView);
-            tv_name = itemView.findViewById(R.id.tv_name);
-            layout_ad = itemView.findViewById(R.id.layout_ad);
-            layout_picture = itemView.findViewById(R.id.layout_picture);
-            tv_content = itemView.findViewById(R.id.tv_content);
-            iv_picture = itemView.findViewById(R.id.iv_pictrure);
         }
     }
 
