@@ -6,13 +6,12 @@ android {
         applicationId "com.hanks.photoviewer"
         minSdkVersion 16
         targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
+        versionCode 4
+        versionName "1.0.2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
         release {
-            v2SigningEnabled true
             Properties properties = new Properties()
             properties.load(project.rootProject.file('local.properties').newDataInputStream())
             storeFile file(properties.getProperty('KEYSTORE_DIR', null))
@@ -24,7 +23,6 @@ android {
     buildTypes {
         debug {
             minifyEnabled false
-            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
         release {
